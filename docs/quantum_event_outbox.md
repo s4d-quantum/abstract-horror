@@ -128,6 +128,8 @@ Use dotted lower-case business names:
 - `sales_order.device_reserved`
 - `sales_order.updated`
 - `sales_order.dispatch_updated`
+- `sales_order.units_confirmed_updated`
+- `sales_order.delivery_status_updated`
 - `sales_order.device_allocated`
 - `sales_order.device_dispatched`
 - `qc.updated`
@@ -234,6 +236,10 @@ The first implementation emits one event per moved IMEI after the legacy stock m
   - emits `sales_order.device_dispatched`
 - `quantum/orders/imei/edit_order.php`
   - emits `sales_order.dispatch_updated`
+- `quantum/orders/imei/includes/update_units_confirmed.php`
+  - emits `sales_order.units_confirmed_updated`
+- `quantum/orders/imei/includes/update_delivery_status.php`
+  - emits `sales_order.delivery_status_updated`
 - `quantum/purchases/imei_purchases/includes/submit_new_purchase.php`
   - emits `goods_in.device_booked`
 - `quantum/purchases/imei_purchases/includes/submit_edit_purchase.php`
