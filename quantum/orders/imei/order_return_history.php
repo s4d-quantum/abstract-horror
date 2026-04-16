@@ -1,6 +1,7 @@
 <?php include '../../db_config.php';  ?>
 <?php $global_url="../../"; ?>
 <?php include "../../authenticate.php" ?>
+<?php require_once "../../shared/quantum_event_outbox.php"; ?>
 <?php 
 
 // ************
@@ -13,6 +14,28 @@ if(isset($_GET['del'])){
   $order_id = $_GET['ord_id'];
   $date = date("Y-m-d");
   $user_id = $_SESSION['user_id'];
+  $return_items = array();
+
+  $fetch_return_items = mysqli_query($conn,"select item_imei, order_id from 
+  tbl_order_return where 
+  return_id = '".$return_id."'")
+  or die('Error:: ' . mysqli_error($conn));
+
+  while($return_item = mysqli_fetch_assoc($fetch_return_items)){
+    $purchase_query = mysqli_query($conn,"select tray_id, supplier_id from tbl_purchases
+    where item_imei ='".$return_item['item_imei']."'
+    order by id desc
+    limit 1")
+    or die('Error:: ' . mysqli_error($conn));
+    $purchase_row = mysqli_fetch_assoc($purchase_query);
+
+    $return_items[] = array(
+      'item_imei' => $return_item['item_imei'],
+      'order_id' => isset($return_item['order_id']) ? (int)$return_item['order_id'] : null,
+      'tray_id' => $purchase_row ? $purchase_row['tray_id'] : null,
+      'supplier_id' => $purchase_row ? $purchase_row['supplier_id'] : null
+    );
+  }
 
   // Fetch items to delete from tbl_non_imei_orders
   $fetch_order_items = mysqli_query($conn,"select * from 
@@ -58,6 +81,37 @@ if(isset($_GET['del'])){
     '".$log['item_imei']."'
     )")
     or die('Error:: ' . mysqli_error($conn));
+
+    $matching_return_item = null;
+    for ($idx = 0; $idx < count($return_items); $idx++) {
+      if ($return_items[$idx]['item_imei'] === $log['item_imei']) {
+        $matching_return_item = $return_items[$idx];
+        break;
+      }
+    }
+
+    $payload = array(
+      'legacy_return_id' => (int)$return_id,
+      'legacy_goodsout_order_id' => $matching_return_item ? $matching_return_item['order_id'] : (int)$order_id,
+      'legacy_sales_order_id' => null,
+      'imei' => $log['item_imei'],
+      'supplier_id' => $matching_return_item ? $matching_return_item['supplier_id'] : null,
+      'tray_id' => $matching_return_item ? $matching_return_item['tray_id'] : null,
+      'deleted_at' => $date,
+      'source' => 'quantum',
+      'operation' => 'sales_order_return_delete'
+    );
+
+    recordQuantumEvent(
+      $conn,
+      'sales.return_deleted',
+      'device',
+      $log['item_imei'],
+      $payload,
+      __FILE__,
+      isset($_SESSION['user_id']) ? (string)$_SESSION['user_id'] : null,
+      array((int)$return_id, $log['item_imei'], 'deleted')
+    );
   }//while loop ended
   // INPUT LOG ENDED
   

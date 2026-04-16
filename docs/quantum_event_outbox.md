@@ -139,6 +139,7 @@ Use dotted lower-case business names:
 - `repair.device_completed`
 - `purchase.return_created`
 - `sales.return_created`
+- `sales.return_deleted`
 
 Names should describe a business decision the future bridge can replay into Plasma.
 
@@ -240,6 +241,12 @@ The first implementation emits one event per moved IMEI after the legacy stock m
   - emits `sales_order.units_confirmed_updated`
 - `quantum/orders/imei/includes/update_delivery_status.php`
   - emits `sales_order.delivery_status_updated`
+- `quantum/orders/imei/update_delivery_statuses.php`
+  - emits `sales_order.delivery_status_updated` for automated delivered-status updates
+- `quantum/orders/imei/new_order_return.php`
+  - emits `sales.return_created`
+- `quantum/orders/imei/order_return_history.php`
+  - emits `sales.return_deleted`
 - `quantum/purchases/imei_purchases/includes/submit_new_purchase.php`
   - emits `goods_in.device_booked`
 - `quantum/purchases/imei_purchases/includes/submit_edit_purchase.php`
@@ -257,14 +264,14 @@ The first implementation emits one event per moved IMEI after the legacy stock m
 
 ## Recommended Next Flows
 
-1. `quantum/orders/imei/order_return_history.php`
-   - inspect the goods-out return path so reversals from a dispatched order emit a clear business event instead of only mutating stock state
+1. `quantum/orders/imei/includes/clear-return-tag-from-order.php`
+   - inspect whether return-tag removal is a meaningful business event for Plasma or just an internal shipping/admin flag
 
-2. `quantum/repair/repair-imei/repair_history_detail.php`
-   - inspect whether any repair completion, escalation, or return-to-stock actions happen outside `save_repair.php` and need their own event boundary
-
-3. `quantum/products/serial/includes/update_tray.php`
+2. `quantum/products/serial/includes/update_tray.php`
    - mirror the IMEI compatibility stock-move event on the serial side only if the serial item lifecycle is still materially used
+
+3. `quantum/purchases/serial_purchases/includes/submit_new_purchase.php`
+   - add serial-side goods-in only if serial volume justifies keeping Plasma in sync for that inventory path
 
 ## Why Not Direct Database Sync
 

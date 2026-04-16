@@ -1,6 +1,7 @@
 <?php include '../../db_config.php';  ?>
 <?php $global_url="../../"; ?>
 <?php include "../../authenticate.php" ?>
+<?php require_once "../../shared/quantum_event_outbox.php"; ?>
 <?php 
 
   // NEW order ID
@@ -16,17 +17,34 @@
     
     $date = $_POST['order_date'];
     $user_id = $_SESSION['user_id'];
+    $customer_id = isset($_GET['cust_id']) ? $_GET['cust_id'] : null;
 
   // INSERT TO order INVENTORY TBL
   for($i = 0;$i<count($_POST['imei_field']);$i++){
+    $imei = $_POST['imei_field'][$i];
+    $new_tray_id = $_POST['tray_field'][$i];
+    $original_order_id = null;
+    $previous_tray_id = null;
+    $supplier_id = null;
 
     $fetch_order_query = mysqli_query($conn,"select order_id from tbl_orders 
       where 
-      item_imei='".$_POST['imei_field'][$i]."' and 
+      item_imei='".$imei."' and 
       order_return = 0 
       order by id desc")
       or die('Error:: '.mysqli_error($conn));
-    $order_id = mysqli_fetch_assoc($fetch_order_query)['order_id'];
+    $order_row = mysqli_fetch_assoc($fetch_order_query);
+    $order_id = $order_row ? $order_row['order_id'] : null;
+    $original_order_id = $order_id ? (int)$order_id : null;
+
+    $purchase_query = mysqli_query($conn,"select tray_id, supplier_id from tbl_purchases
+      where item_imei ='".$imei."'
+      order by id desc
+      limit 1")
+      or die('Error:: '.mysqli_error($conn));
+    $purchase_row = mysqli_fetch_assoc($purchase_query);
+    $previous_tray_id = $purchase_row ? $purchase_row['tray_id'] : null;
+    $supplier_id = $purchase_row ? $purchase_row['supplier_id'] : null;
 
     // Add into TAC table
       $new_order_return = mysqli_query($conn,"insert into tbl_order_return 
@@ -38,7 +56,7 @@
       order_id
       ) 
       values(
-      '".$_POST['imei_field'][$i]."',
+      '".$imei."',
       '".$date."',
       '".$new_return_id."',
       ".$user_id.",
@@ -47,18 +65,18 @@
 
       // update status in item_imei
       $new_imei = mysqli_query($conn,"update tbl_imei set status=1, in_sales_order = NULL
-      where item_imei ='".$_POST['imei_field'][$i]."'") 
+      where item_imei ='".$imei."'") 
       or die('Error:: ' . mysqli_error($conn));
 
       // update tray_id in tbl_purchases 
-      $update_purchase = mysqli_query($conn,"update tbl_purchases set tray_id='".$_POST['tray_field'][$i]."'
-      where item_imei ='".$_POST['imei_field'][$i]."'") 
+      $update_purchase = mysqli_query($conn,"update tbl_purchases set tray_id='".$new_tray_id."'
+      where item_imei ='".$imei."'") 
       or die('Error:: ' . mysqli_error($conn));
 
       // update tbl orders 
       $new_order_imei = mysqli_query($conn,"update tbl_orders set 
       order_return=1
-      where item_imei ='".$_POST['imei_field'][$i]."' and 
+      where item_imei ='".$imei."' and 
       order_id='".$order_id."'") 
       or die('Error:: ' . mysqli_error($conn));
 
@@ -78,9 +96,34 @@
         'QTY:1',
         '".$date."',
         ".$user_id.",
-        '".$_POST['imei_field'][$i]."'
+        '".$imei."'
         )")
         or die('Error:: ' . mysqli_error($conn));
+
+      $payload = array(
+        'legacy_return_id' => (int)$new_return_id,
+        'legacy_goodsout_order_id' => $original_order_id,
+        'legacy_sales_order_id' => null,
+        'imei' => $imei,
+        'customer_id' => $customer_id,
+        'supplier_id' => $supplier_id,
+        'old_tray_id' => $previous_tray_id,
+        'new_tray_id' => $new_tray_id,
+        'return_date' => $date,
+        'source' => 'quantum',
+        'operation' => 'sales_order_return_submit'
+      );
+
+      recordQuantumEvent(
+        $conn,
+        'sales.return_created',
+        'device',
+        $imei,
+        $payload,
+        __FILE__,
+        isset($_SESSION['user_id']) ? (string)$_SESSION['user_id'] : null,
+        array((int)$new_return_id, $imei)
+      );
 
     } //loop ended
 
