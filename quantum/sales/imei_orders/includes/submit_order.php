@@ -1,4 +1,5 @@
 <?php include '../../../db_config.php'; ?>
+<?php require_once '../../../shared/quantum_event_outbox.php'; ?>
 
 <?php
 
@@ -122,6 +123,7 @@ for ($i = 0; $i < $item_count; $i++) {
             0
         )"
     ) or die('Error:: ' . mysqli_error($conn));
+    $salesOrderRowId = (int)mysqli_insert_id($conn);
 
     // --- LOG ---
     mysqli_query(
@@ -142,6 +144,35 @@ for ($i = 0; $i < $item_count; $i++) {
             '{$_POST['item_code'][$i]}'
         )"
     ) or die('Error:: ' . mysqli_error($conn));
+
+    $payload = array(
+        'legacy_order_id' => (int)$new_ord_id,
+        'legacy_sales_order_row_id' => $salesOrderRowId,
+        'imei' => $_POST['item_code'][$i],
+        'customer_id' => $customer,
+        'supplier_id' => $supplier[$i],
+        'po_ref' => $po_ref,
+        'customer_ref' => $customer_ref,
+        'tray_id' => $_POST['tray_id'][$i],
+        'item_brand' => $_POST['item_brand'][$i],
+        'item_details' => $_POST['item_details'][$i],
+        'item_gb' => $_POST['item_gb'][$i],
+        'item_grade' => $_POST['item_grade'][$i],
+        'item_color' => $_POST['item_color'][$i],
+        'source' => 'quantum',
+        'operation' => 'sales_order_submit'
+    );
+
+    recordQuantumEvent(
+        $conn,
+        'sales_order.device_reserved',
+        'device',
+        $_POST['item_code'][$i],
+        $payload,
+        __FILE__,
+        (string)$user_id,
+        array((int)$new_ord_id, $_POST['item_code'][$i])
+    );
 }
 
 echo json_encode(['success' => true, 'order_id' => $new_ord_id]);

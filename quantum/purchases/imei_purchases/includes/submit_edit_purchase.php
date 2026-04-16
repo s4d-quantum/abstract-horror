@@ -1,8 +1,12 @@
 <?php include '../../../db_config.php';  ?>
+<?php require_once '../../../shared/quantum_event_outbox.php'; ?>
 <?php
 
   $new_pur_id = $_POST['purchase_id'];
   $curr_date = date("Y-m-d");
+  $existing_purchase_items = array();
+  $existing_items_by_imei = array();
+  $last_log_id = 0;
 
   // fetch purchase details
   $fetch_purchase_query = mysqli_query($conn,"select * from tbl_purchases where 
@@ -16,6 +20,36 @@
   $priority = is_null($fetch_purchase['priority']) ? 0 : $fetch_purchase['priority'];
   $has_return_tag = $fetch_purchase['has_return_tag'];
   $unit_confirmed = $fetch_purchase['unit_confirmed'];
+
+  $fetch_existing_purchase_items = mysqli_query($conn,"
+    select
+    pr.supplier_id,
+    pr.date,
+    pr.qc_required,
+    pr.repair_required,
+    pr.tray_id,
+    pr.purchase_return,
+    pr.po_ref,
+    im.item_imei,
+    im.item_tac,
+    im.item_color,
+    im.item_grade,
+    im.item_gb,
+    im.status,
+    tc.item_details,
+    tc.item_brand
+    from tbl_purchases as pr
+    left join tbl_imei as im on im.item_imei = pr.item_imei
+    left join tbl_tac as tc on tc.item_tac = im.item_tac
+    where pr.purchase_id='".$new_pur_id."'
+    order by pr.id
+  ")
+  or die('Error:: ' . mysqli_error($conn));
+
+  while($existing_row = mysqli_fetch_assoc($fetch_existing_purchase_items)){
+    $existing_purchase_items[] = $existing_row;
+    $existing_items_by_imei[$existing_row['item_imei']] = $existing_row;
+  }
 
   /* 
     1 - Fetch all previous items and match with each new items, 
@@ -163,6 +197,8 @@
 
 
   // INSERT TO PURCHASE INVENTORY TBL
+  $new_purchase_items = array();
+  $new_items_by_imei = array();
   for($i = 0;$i<count($_POST['imei_field']);$i++){
 
 
@@ -259,4 +295,104 @@
     ".$user_id.",
     '".$_POST['imei_field'][$i]."')")
     or die('Error:: ' . mysqli_error($conn));
+
+    $last_log_id = (int)mysqli_insert_id($conn);
+    $new_item = array(
+      'supplier_id' => $_POST['purchase_supplier'],
+      'date' => $date,
+      'qc_required' => (int)$_POST['qc_required'],
+      'repair_required' => (int)$_POST['repair_required'],
+      'tray_id' => $_POST['tray_id'][$i],
+      'purchase_return' => (int)$_POST['purchase_return'][$i],
+      'po_ref' => $_POST['po_ref'],
+      'item_imei' => $_POST['imei_field'][$i],
+      'item_tac' => $tac,
+      'item_color' => trim($_POST['color_field'][$i]),
+      'item_grade' => $_POST['grade_field'][$i],
+      'item_gb' => $_POST['gb_field'][$i],
+      'status' => (int)$_POST['status'][$i],
+      'item_details' => trim($_POST['details_field'][$i]),
+      'item_brand' => $_POST['brand_field'][$i]
+    );
+
+    $new_purchase_items[] = $new_item;
+    $new_items_by_imei[$_POST['imei_field'][$i]] = $new_item;
   }//for loop ended
+
+  $existing_item_codes = array_keys($existing_items_by_imei);
+  $new_item_codes = array_keys($new_items_by_imei);
+  $added_item_codes = array_values(array_diff($new_item_codes, $existing_item_codes));
+  $removed_item_codes = array_values(array_diff($existing_item_codes, $new_item_codes));
+  sort($added_item_codes);
+  sort($removed_item_codes);
+
+  $changed_items = array();
+  foreach ($new_items_by_imei as $imei => $new_item) {
+    if (!isset($existing_items_by_imei[$imei])) {
+      continue;
+    }
+
+    $existing_item = $existing_items_by_imei[$imei];
+    if (
+      $existing_item['supplier_id'] !== $new_item['supplier_id'] ||
+      $existing_item['date'] !== $new_item['date'] ||
+      $existing_item['qc_required'] != $new_item['qc_required'] ||
+      $existing_item['repair_required'] != $new_item['repair_required'] ||
+      $existing_item['tray_id'] !== $new_item['tray_id'] ||
+      $existing_item['purchase_return'] != $new_item['purchase_return'] ||
+      $existing_item['po_ref'] !== $new_item['po_ref'] ||
+      $existing_item['item_tac'] !== $new_item['item_tac'] ||
+      $existing_item['item_color'] !== $new_item['item_color'] ||
+      $existing_item['item_grade'] !== $new_item['item_grade'] ||
+      $existing_item['item_gb'] !== $new_item['item_gb'] ||
+      $existing_item['status'] != $new_item['status'] ||
+      $existing_item['item_details'] !== $new_item['item_details'] ||
+      $existing_item['item_brand'] !== $new_item['item_brand']
+    ) {
+      $changed_items[$imei] = array(
+        'old' => $existing_item,
+        'new' => $new_item
+      );
+    }
+  }
+
+  $existing_purchase_header = !empty($existing_purchase_items) ? $existing_purchase_items[0] : null;
+  $header_changed =
+    !$existing_purchase_header ||
+    $existing_purchase_header['supplier_id'] !== $_POST['purchase_supplier'] ||
+    $existing_purchase_header['date'] !== $date ||
+    $existing_purchase_header['qc_required'] != $_POST['qc_required'] ||
+    $existing_purchase_header['repair_required'] != $_POST['repair_required'] ||
+    $existing_purchase_header['po_ref'] !== $_POST['po_ref'];
+
+  if ($header_changed || !empty($added_item_codes) || !empty($removed_item_codes) || !empty($changed_items)) {
+    $payload = array(
+      'legacy_purchase_id' => (int)$new_pur_id,
+      'supplier_id' => $_POST['purchase_supplier'],
+      'purchase_date' => $date,
+      'po_ref' => $_POST['po_ref'],
+      'qc_required' => (int)$_POST['qc_required'],
+      'repair_required' => (int)$_POST['repair_required'],
+      'previous_supplier_id' => $existing_purchase_header ? $existing_purchase_header['supplier_id'] : null,
+      'previous_purchase_date' => $existing_purchase_header ? $existing_purchase_header['date'] : null,
+      'previous_po_ref' => $existing_purchase_header ? $existing_purchase_header['po_ref'] : null,
+      'item_codes' => array_values($new_item_codes),
+      'added_item_codes' => $added_item_codes,
+      'removed_item_codes' => $removed_item_codes,
+      'changed_items' => $changed_items,
+      'items' => $new_purchase_items,
+      'source' => 'quantum',
+      'operation' => 'goods_in_edit_submit'
+    );
+
+    recordQuantumEvent(
+      $conn,
+      'purchase.updated',
+      'purchase',
+      (string)$new_pur_id,
+      $payload,
+      __FILE__,
+      (string)$user_id,
+      array((int)$new_pur_id, $last_log_id)
+    );
+  }

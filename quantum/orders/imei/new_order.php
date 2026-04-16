@@ -2,6 +2,7 @@
 <?php $global_url="../../"; ?>
 <?php include "../../authenticate.php" ?>
 <?php include "../../csrf_protection.php" ?>
+<?php require_once "../../shared/quantum_event_outbox.php"; ?>
 <?php 
 
   // fetch suppliers
@@ -20,18 +21,26 @@
   $po_ref = '';
   $customer_ref = '';
   $sales_customer_id = '';
+  $salesOrderItemsByImei = array();
   if ($sales_order_id > 0) {
-    $fetch_sales_data = mysqli_query($conn,"select po_ref, customer_ref, customer_id from tbl_imei_sales_orders
-    where order_id=".$sales_order_id." LIMIT 1");
-    $sales_data = $fetch_sales_data ? mysqli_fetch_assoc($fetch_sales_data) : null;
+    $fetch_sales_data = mysqli_query($conn,"select id, item_code, supplier_id, tray_id, item_brand, item_details, item_color, item_grade, item_gb, po_ref, customer_ref, customer_id from tbl_imei_sales_orders
+    where order_id=".$sales_order_id);
+    if ($fetch_sales_data) {
+      while ($sales_row = mysqli_fetch_assoc($fetch_sales_data)) {
+        if ($po_ref === '') {
+          $po_ref = $sales_row['po_ref'];
+          $customer_ref = $sales_row['customer_ref'];
+          $sales_customer_id = $sales_row['customer_id'];
+        }
+
+        $salesOrderItemsByImei[$sales_row['item_code']] = $sales_row;
+      }
+    }
+    $sales_data = count($salesOrderItemsByImei) > 0 ? reset($salesOrderItemsByImei) : null;
 
     if (!$sales_data) {
       die('Error: Sales order not found. Please reopen the goods out from the sales order list and try again.');
     }
-
-    $po_ref = $sales_data['po_ref'];
-    $customer_ref = $sales_data['customer_ref'];
-    $sales_customer_id = $sales_data['customer_id'];
   }
   // print_r($po_ref);
   // die();
@@ -271,6 +280,47 @@
 
 	        // If we got here, everything is good
 	        mysqli_commit($conn);
+
+          for ($i = 0; $i < count($_POST['imei_field']); $i++) {
+            $imei = $_POST['imei_field'][$i];
+            $salesOrderItem = isset($salesOrderItemsByImei[$imei]) ? $salesOrderItemsByImei[$imei] : array();
+
+            $payload = array(
+              'legacy_sales_order_id' => $sales_order_id,
+              'legacy_sales_order_row_id' => isset($salesOrderItem['id']) ? (int)$salesOrderItem['id'] : null,
+              'legacy_goodsout_order_id' => $new_order_id,
+              'imei' => $imei,
+              'customer_id' => $customer_id,
+              'supplier_id' => isset($salesOrderItem['supplier_id']) ? $salesOrderItem['supplier_id'] : null,
+              'po_ref' => $po_ref,
+              'customer_ref' => $_POST['customer_ref'],
+              'tray_id' => isset($salesOrderItem['tray_id']) ? $salesOrderItem['tray_id'] : null,
+              'item_brand' => isset($salesOrderItem['item_brand']) ? $salesOrderItem['item_brand'] : null,
+              'item_details' => isset($salesOrderItem['item_details']) ? $salesOrderItem['item_details'] : null,
+              'item_color' => isset($salesOrderItem['item_color']) ? $salesOrderItem['item_color'] : null,
+              'item_grade' => isset($salesOrderItem['item_grade']) ? $salesOrderItem['item_grade'] : null,
+              'item_gb' => isset($salesOrderItem['item_gb']) ? $salesOrderItem['item_gb'] : null,
+              'order_date' => $date,
+              'tracking_no' => $_POST['tracking_no'],
+              'delivery_company' => $_POST['delivery_company'],
+              'total_boxes' => (int)$_POST['total_boxes'],
+              'total_pallets' => (int)$_POST['total_pallets'],
+              'po_box' => $_POST['po_box'],
+              'source' => 'quantum',
+              'operation' => 'goods_out_submit'
+            );
+
+            recordQuantumEvent(
+              $conn,
+              'sales_order.device_dispatched',
+              'device',
+              $imei,
+              $payload,
+              __FILE__,
+              isset($_SESSION['user_id']) ? (string)$_SESSION['user_id'] : null,
+              array((int)$sales_order_id, (int)$new_order_id, $imei)
+            );
+          }
 	        
 	    } catch (Exception $e) {
 	        mysqli_rollback($conn);

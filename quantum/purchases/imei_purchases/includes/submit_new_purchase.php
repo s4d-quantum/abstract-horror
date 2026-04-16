@@ -1,4 +1,5 @@
 <?php include '../../../db_config.php';  ?>
+<?php require_once '../../../shared/quantum_event_outbox.php'; ?>
 <?php
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -162,6 +163,35 @@ if (session_status() === PHP_SESSION_NONE) {
       '".$_POST['imei_field'][$i]."'
       )")
       or die('Error:: ' . mysqli_error($conn));
+
+      $payload = array(
+        'purchase_id' => (int)$new_pur_id,
+        'legacy_imei_id' => null,
+        'imei' => $_POST['imei_field'][$i],
+        'item_tac' => $tac,
+        'tray_id' => $_POST['tray_id'][$i],
+        'supplier_id' => $_POST['purchase_supplier'],
+        'purchase_date' => $date,
+        'po_ref' => $_POST['po_ref'],
+        'qc_required' => (int)$_POST['qc_required'],
+        'repair_required' => (int)$_POST['repair_required'],
+        'item_color' => $itemColor,
+        'item_grade' => $_POST['grade_field'][$i],
+        'item_gb' => $_POST['gb_field'][$i],
+        'source' => 'quantum',
+        'operation' => 'goods_in_submit'
+      );
+
+      recordQuantumEvent(
+        $conn,
+        'goods_in.device_booked',
+        'device',
+        $_POST['imei_field'][$i],
+        $payload,
+        __FILE__,
+        (string)$user_id,
+        array((int)$new_pur_id, $_POST['imei_field'][$i])
+      );
 
     }//for loop ended
 

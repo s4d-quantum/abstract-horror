@@ -1,6 +1,7 @@
 <?php include '../../db_config.php'; ?>
 <?php include "../../authenticate.php"; ?>
 <?php $global_url = "../../"; ?>
+<?php require_once "../../shared/quantum_event_outbox.php"; ?>
 
 <?php
 $errors = [];
@@ -212,6 +213,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['move_stock'])) {
       }
       
       mysqli_commit($conn);
+
+      $eventSourceUser = isset($_SESSION['user_id']) ? (string)$_SESSION['user_id'] : null;
+      foreach ($deviceMoves as $move) {
+        $payload = array(
+          'admin_op_id' => (int)$adminOpId,
+          'legacy_imei_id' => null,
+          'imei' => $move['item_imei'],
+          'old_tray_id' => $move['old_tray'],
+          'new_tray_id' => $selectedTray,
+          'operation_date' => $operationDateValue,
+          'reason' => $reasonValue,
+          'source' => 'quantum',
+          'operation' => 'manual_stock_move',
+        );
+
+        recordQuantumEvent(
+          $conn,
+          'stock.device_moved',
+          'device',
+          $move['item_imei'],
+          $payload,
+          __FILE__,
+          $eventSourceUser,
+          array((int)$adminOpId, $move['item_imei'])
+        );
+      }
+
       header("Location: admin_ops_detail.php?id=" . $adminOpId);
       exit;
     }

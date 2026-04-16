@@ -1,5 +1,102 @@
 <?php include '../../../../db_config.php';  ?>
+<?php require_once '../../../../shared/quantum_event_outbox.php'; ?>
 <?php
+
+function quantumRepairPartsFetchSnapshot($db, $purchaseId, $itemCode) {
+  $purchaseId = (int)$purchaseId;
+  $escapedItemCode = mysqli_real_escape_string($db, $itemCode);
+  $parts = array();
+  $payload = array(
+    'legacy_purchase_id' => $purchaseId,
+    'legacy_imei_id' => null,
+    'imei' => $itemCode,
+    'tray_id' => null,
+    'item_brand' => null,
+    'item_details' => null,
+    'item_gb' => null,
+    'item_grade' => null,
+    'item_color' => null,
+    'item_comments' => null,
+    'repair_required' => null,
+    'repair_completed' => null,
+    'parts' => array(),
+    'source' => 'quantum',
+    'operation' => 'repair_parts_submit'
+  );
+
+  $deviceQuery = mysqli_query($db, "
+    select
+    pr.purchase_id,
+    pr.item_imei,
+    pr.tray_id,
+    pr.repair_required,
+    pr.repair_completed,
+    rep.item_comments,
+    im.item_grade,
+    im.item_color,
+    im.item_gb,
+    tac.item_brand,
+    tac.item_details
+    from tbl_purchases as pr
+    left join tbl_repair_imei_products as rep
+      on rep.item_code = pr.item_imei and rep.purchase_id = pr.purchase_id
+    left join tbl_imei as im
+      on im.item_imei = pr.item_imei
+    left join tbl_tac as tac
+      on tac.item_tac = im.item_tac
+    where pr.purchase_id=".$purchaseId."
+    and pr.item_imei='".$escapedItemCode."'
+    limit 1
+  ");
+
+  if ($deviceQuery && mysqli_num_rows($deviceQuery) > 0) {
+    $deviceRow = mysqli_fetch_assoc($deviceQuery);
+    $payload['tray_id'] = $deviceRow['tray_id'];
+    $payload['item_brand'] = $deviceRow['item_brand'];
+    $payload['item_details'] = $deviceRow['item_details'];
+    $payload['item_gb'] = $deviceRow['item_gb'];
+    $payload['item_grade'] = $deviceRow['item_grade'];
+    $payload['item_color'] = $deviceRow['item_color'];
+    $payload['item_comments'] = $deviceRow['item_comments'];
+    $payload['repair_required'] = isset($deviceRow['repair_required']) ? (int)$deviceRow['repair_required'] : null;
+    $payload['repair_completed'] = isset($deviceRow['repair_completed']) ? (int)$deviceRow['repair_completed'] : null;
+  }
+
+  $partsQuery = mysqli_query($db, "
+    select
+    r.part_id,
+    r.part_qty,
+    p.title,
+    p.item_brand,
+    p.item_model,
+    p.item_color,
+    p.item_tac
+    from tbl_repair_imei_parts as r
+    left join tbl_parts_products as p
+      on p.id = r.part_id
+    where r.purchase_id=".$purchaseId."
+    and r.item_code='".$escapedItemCode."'
+    order by r.id
+  ");
+
+  if ($partsQuery) {
+    while ($partRow = mysqli_fetch_assoc($partsQuery)) {
+      $parts[] = array(
+        'part_id' => isset($partRow['part_id']) ? (int)$partRow['part_id'] : null,
+        'part_qty' => isset($partRow['part_qty']) ? (int)$partRow['part_qty'] : null,
+        'part_title' => $partRow['title'],
+        'part_brand' => $partRow['item_brand'],
+        'part_model' => $partRow['item_model'],
+        'part_color' => $partRow['item_color'],
+        'part_tac' => $partRow['item_tac']
+      );
+    }
+  }
+
+  $payload['parts'] = $parts;
+
+  return $payload;
+}
 
 
   $item_code = $_POST['item_code'];
@@ -98,6 +195,19 @@
   
     }      
   }
+
+  $repairPartsPayload = quantumRepairPartsFetchSnapshot($conn, $purchase_id, $item_code);
+
+  recordQuantumEvent(
+    $conn,
+    'repair.updated',
+    'device',
+    $item_code,
+    $repairPartsPayload,
+    __FILE__,
+    (string)$user_id,
+    array((int)$purchase_id, $item_code, 'repair.parts')
+  );
       
   // print json_encode(array(
   //   'hello' => $hello 

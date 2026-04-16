@@ -2,6 +2,7 @@
 <?php $global_url="../../"; ?>
 <?php include "../../authenticate.php" ?>
 <?php include "../../csrf_protection.php" ?>
+<?php require_once "../../shared/quantum_event_outbox.php"; ?>
 <?php 
 
   // fetch suppliers
@@ -49,6 +50,57 @@
     $date = $prev_data['date'];
     $customer = $_POST['order_customer'];
     $user_id = $_SESSION['user_id'];
+    $existing_order_items = array();
+    $existing_items_by_imei = array();
+    $new_order_items = array();
+    $new_items_by_imei = array();
+    $last_log_id = 0;
+
+    $fetch_existing_order_snapshot = mysqli_query($conn,"
+      select
+      ord.customer_id,
+      ord.item_imei,
+      ord.date,
+      ord.order_id,
+      ord.order_return,
+      ord.po_box,
+      ord.delivery_company,
+      ord.total_pallets,
+      ord.total_boxes,
+      im.item_color,
+      im.item_grade,
+      im.item_gb,
+      tc.item_details,
+      tc.item_brand
+      from tbl_orders as ord
+      left join tbl_imei as im on im.item_imei = ord.item_imei
+      left join tbl_tac as tc on tc.item_tac = im.item_tac
+      where ord.order_id='".$new_order_id."'
+      order by ord.id
+    ")
+    or die('Error:: ' . mysqli_error($conn));
+
+    while($existing_order_row = mysqli_fetch_assoc($fetch_existing_order_snapshot)){
+      $existing_item = array(
+        'customer_id' => $existing_order_row['customer_id'],
+        'item_imei' => $existing_order_row['item_imei'],
+        'date' => $existing_order_row['date'],
+        'order_id' => $existing_order_row['order_id'],
+        'order_return' => isset($existing_order_row['order_return']) ? (int)$existing_order_row['order_return'] : 0,
+        'po_box' => $existing_order_row['po_box'],
+        'delivery_company' => $existing_order_row['delivery_company'],
+        'total_pallets' => isset($existing_order_row['total_pallets']) ? (int)$existing_order_row['total_pallets'] : 0,
+        'total_boxes' => isset($existing_order_row['total_boxes']) ? (int)$existing_order_row['total_boxes'] : 0,
+        'item_color' => $existing_order_row['item_color'],
+        'item_grade' => $existing_order_row['item_grade'],
+        'item_gb' => $existing_order_row['item_gb'],
+        'item_details' => $existing_order_row['item_details'],
+        'item_brand' => $existing_order_row['item_brand']
+      );
+
+      $existing_order_items[] = $existing_item;
+      $existing_items_by_imei[$existing_order_row['item_imei']] = $existing_item;
+    }
 
 
     // ===========
@@ -150,6 +202,106 @@
         )")
         or die('Error:: ' . mysqli_error($conn));
 
+      $last_log_id = (int)mysqli_insert_id($conn);
+      $new_item = array(
+        'customer_id' => $customer,
+        'item_imei' => $_POST['imei_field'][$i],
+        'date' => $date,
+        'order_id' => $new_order_id,
+        'order_return' => isset($_POST['order_return'][$i]) ? (int)$_POST['order_return'][$i] : 0,
+        'po_box' => $_POST['po_box'],
+        'delivery_company' => $_POST['delivery_company'],
+        'total_pallets' => isset($_POST['total_pallets']) ? (int)$_POST['total_pallets'] : 0,
+        'total_boxes' => isset($_POST['total_boxes']) ? (int)$_POST['total_boxes'] : 0,
+        'item_color' => isset($_POST['color_field'][$i]) ? trim($_POST['color_field'][$i]) : null,
+        'item_grade' => isset($_POST['grade_field'][$i]) ? trim($_POST['grade_field'][$i]) : null,
+        'item_gb' => isset($_POST['gb_field'][$i]) ? trim($_POST['gb_field'][$i]) : null,
+        'item_details' => isset($_POST['details_field'][$i]) ? trim($_POST['details_field'][$i]) : null,
+        'item_brand' => isset($_POST['brand_field'][$i]) ? trim($_POST['brand_field'][$i]) : null
+      );
+
+      $new_order_items[] = $new_item;
+      $new_items_by_imei[$_POST['imei_field'][$i]] = $new_item;
+
+    }
+
+    $existing_item_codes = array_keys($existing_items_by_imei);
+    $new_item_codes = array_keys($new_items_by_imei);
+    $added_item_codes = array_values(array_diff($new_item_codes, $existing_item_codes));
+    $removed_item_codes = array_values(array_diff($existing_item_codes, $new_item_codes));
+    sort($added_item_codes);
+    sort($removed_item_codes);
+
+    $changed_items = array();
+    foreach ($new_items_by_imei as $imei => $new_item) {
+      if (!isset($existing_items_by_imei[$imei])) {
+        continue;
+      }
+
+      $existing_item = $existing_items_by_imei[$imei];
+      if (
+        $existing_item['customer_id'] !== $new_item['customer_id'] ||
+        $existing_item['order_return'] !== $new_item['order_return'] ||
+        $existing_item['po_box'] !== $new_item['po_box'] ||
+        $existing_item['delivery_company'] !== $new_item['delivery_company'] ||
+        $existing_item['total_pallets'] !== $new_item['total_pallets'] ||
+        $existing_item['total_boxes'] !== $new_item['total_boxes'] ||
+        $existing_item['item_color'] !== $new_item['item_color'] ||
+        $existing_item['item_grade'] !== $new_item['item_grade'] ||
+        $existing_item['item_gb'] !== $new_item['item_gb'] ||
+        $existing_item['item_details'] !== $new_item['item_details'] ||
+        $existing_item['item_brand'] !== $new_item['item_brand']
+      ) {
+        $changed_items[$imei] = array(
+          'old' => $existing_item,
+          'new' => $new_item
+        );
+      }
+    }
+
+    $existing_order_header = !empty($existing_order_items) ? $existing_order_items[0] : null;
+    $header_changed =
+      !$existing_order_header ||
+      $existing_order_header['customer_id'] !== $customer ||
+      $existing_order_header['po_box'] !== $_POST['po_box'] ||
+      $existing_order_header['delivery_company'] !== $_POST['delivery_company'] ||
+      $existing_order_header['total_pallets'] !== (int)$_POST['total_pallets'] ||
+      $existing_order_header['total_boxes'] !== (int)$_POST['total_boxes'];
+
+    if ($header_changed || !empty($added_item_codes) || !empty($removed_item_codes) || !empty($changed_items)) {
+      $payload = array(
+        'legacy_goodsout_order_id' => (int)$new_order_id,
+        'legacy_sales_order_id' => isset($sales_id['sales_order_id']) ? (int)$sales_id['sales_order_id'] : null,
+        'customer_id' => $customer,
+        'date' => $date,
+        'po_box' => $_POST['po_box'],
+        'delivery_company' => $_POST['delivery_company'],
+        'total_pallets' => (int)$_POST['total_pallets'],
+        'total_boxes' => (int)$_POST['total_boxes'],
+        'previous_customer_id' => $existing_order_header ? $existing_order_header['customer_id'] : null,
+        'previous_po_box' => $existing_order_header ? $existing_order_header['po_box'] : null,
+        'previous_delivery_company' => $existing_order_header ? $existing_order_header['delivery_company'] : null,
+        'previous_total_pallets' => $existing_order_header ? $existing_order_header['total_pallets'] : null,
+        'previous_total_boxes' => $existing_order_header ? $existing_order_header['total_boxes'] : null,
+        'item_codes' => array_values($new_item_codes),
+        'added_item_codes' => $added_item_codes,
+        'removed_item_codes' => $removed_item_codes,
+        'changed_items' => $changed_items,
+        'items' => $new_order_items,
+        'source' => 'quantum',
+        'operation' => 'goods_out_edit_submit'
+      );
+
+      recordQuantumEvent(
+        $conn,
+        'sales_order.dispatch_updated',
+        'goodsout_order',
+        (string)$new_order_id,
+        $payload,
+        __FILE__,
+        isset($_SESSION['user_id']) ? (string)$_SESSION['user_id'] : null,
+        array((int)$new_order_id, $last_log_id)
+      );
     }
 
     header("location:order_details.php?ord_id=".$new_order_id."&email=1");
