@@ -17,8 +17,8 @@
   },
   "homepage": "https://github.com/AhmedGMurtaza/s4dlimiteduk#readme",
   "dependencies": {
-    "jquery": "^3.3.1",
-    "lodash": "4.17.11",
+    "jquery": "^3.5.0",
+    "lodash": "4.18.1",
     "repomix": "^0.2.20",
     "uglify-js": "3.4.9"
   },
