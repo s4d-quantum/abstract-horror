@@ -1,0 +1,113 @@
+
+Get order details:
+
+curl --request GET \
+  --url https://www.backmarket.fr/ws/orders/55205700 \
+  --header 'Accept: application/json' \
+  --header 'Authorization: Basic MDZkNjBjNGIyODVlZDQxODFhMjBmZTpCTVQtNWZjZmVmZmNjOWNmZjZmZTM2NWJkNjk2YWEzZDUxZTM0OTYyMGE0ZA=='
+
+
+Returns
+
+{
+  "order_id": 55205700,
+  "shipping_address": {
+    "company": "",
+    "first_name": "Hamza",
+    "first_name_pronunciation": null,
+    "last_name": "Mughul",
+    "last_name_pronunciation": null,
+    "street": "202 Spackmans Way",
+    "street2": "",
+    "postal_code": "SL1 2SE",
+    "country": "GB",
+    "city": "Slough",
+    "phone": "07467375958",
+    "email": "shipping_19831653_55205700@eu.perso-email.com",
+    "customer_id_number": ""
+  },
+  "billing_address": {
+    "company": "",
+    "first_name": "Hamza",
+    "first_name_pronunciation": null,
+    "last_name": "Mughul",
+    "last_name_pronunciation": null,
+    "street": "62 Moss Bank",
+    "street2": "",
+    "postal_code": "M8 5AP",
+    "country": "GB",
+    "city": "Manchester",
+    "phone": null,
+    "email": "invoice_19831653_55205700@eu.perso-email.com",
+    "customer_id_number": ""
+  },
+  "delivery_note": "https://backmarket-prod.s3.amazonaws.com/delivery_form/55205700_delivery_form.pdf?AWSAccessKeyId=AKIA3KCUUZOWIKY5ODNN&Signature=XmrgSib6Ym%2Bm39eFEYaX3Q7kOgQ%3D&Expires=1757255161",
+  "tracking_number": "6557989593",
+  "tracking_url": "https://www.dpdlocal.co.uk/service/tracking?parcel=6557989593",
+  "shipper": "DPD UK",
+  "shipper_display": "DPD UK",
+  "date_creation": "2025-08-14T18:32:02+02:00",
+  "date_modification": "2025-08-20T15:03:52+02:00",
+  "date_shipping": "2025-08-20T15:03:52+02:00",
+  "date_payment": "2025-08-14T18:34:34+02:00",
+  "date_bill_provided": null,
+  "state": 9,
+  "orderlines": [
+    {
+      "id": 55517323,
+      "date_creation": "2025-08-14T18:32:02+02:00",
+      "state": 3,
+      "price": "299.00",
+      "shipping_price": "0.00",
+      "shipping_delay": 48,
+      "shipper": "DPD UK",
+      "currency": "GBP",
+      "return_reason": 0,
+      "return_message": "",
+      "listing": "s22+5G128GBBackPREM",
+      "product": "Galaxy S22+ 5G 128GB - Black - Unlocked",
+      "quantity": 1,
+      "brand": "Samsung",
+      "product_id": 666360,
+      "backcare": false,
+      "backcare_price": 0,
+      "listing_id": 5683927,
+      "sales_taxes": "0.00",
+      "imei": "353055520826493",
+      "serial_number": "",
+      "condition": 9,
+      "orderline_fee": "32.89"
+    }
+  ],
+  "price": "299.00",
+  "shipping_price": "0.00",
+  "currency": "GBP",
+  "country_code": "en-gb",
+  "paypal_reference": null,
+  "psp_reference": "8ecc2ca8-757b-4eb6-894f-71deaaee07af",
+  "installment_payment": false,
+  "payment_method": "PAYPAL",
+  "sales_taxes": "0.00",
+  "expected_dispatch_date": null,
+  "is_backship": false
+}
+
+
+
+
+
+Update BM order with IMEI and tracking no:
+
+curl --request POST \
+  --url "https://www.backmarket.fr/ws/orders/55324471" \
+  --header 'Accept: application/json' \
+  --header 'Authorization: Basic MDZkNjBjNGIyODVlZDQxODFhMjBmZTpCTVQtNWZjZmVmZmNjOWNmZjZmZTM2NWJkNjk2YWEzZDUxZTM0OTYyMGE0ZA==' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "order_id": 55324471,
+    "new_state": 3,
+    "imei": "354601552852490",
+    "tracking_number": "6557522032",
+    "shipper": "DPD UK"
+  }'
+

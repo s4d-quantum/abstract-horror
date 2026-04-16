@@ -1,0 +1,65 @@
+#!/bin/bash
+# Fetch Back Market order details and print delivery note via remote CUPS server
+
+# --- Config ---
+CUPS_SERVER="10.118.20.93:631"
+PRINTER="Xerox_VersaLink_C500"
+BM_API_URL="https://www.backmarket.fr/ws/orders"
+AUTH_HEADER="Authorization: Basic MDZkNjBjNGIyODVlZDQxODFhMjBmZTpCTVQtNWZjZmVmZmNjOWNmZjZmZTM2NWJkNjk2YWEzZDUxZTM0OTYyMGE0ZA=="
+
+ORDER_ID="$1"
+TMPFILE="/tmp/delivery_form_${ORDER_ID}_$$.pdf"
+
+if [ -z "$ORDER_ID" ]; then
+    echo "Usage: $0 <BM_ORDER_ID>"
+    exit 1
+fi
+
+# --- Fetch order info ---
+echo "[INFO] Fetching order $ORDER_ID..."
+ORDER_JSON=$(curl -s -X GET "$BM_API_URL/$ORDER_ID" \
+    -H "Accept: application/json" \
+    -H "$AUTH_HEADER")
+
+if [ -z "$ORDER_JSON" ]; then
+    echo "[ERROR] No response from Back Market API."
+    exit 2
+fi
+
+# --- Extract delivery note URL ---
+DELIVERY_URL=$(echo "$ORDER_JSON" | jq -r '.delivery_note')
+
+if [ -z "$DELIVERY_URL" ] || [ "$DELIVERY_URL" = "null" ]; then
+    echo "[ERROR] No delivery_note URL found in API response."
+    echo "$ORDER_JSON"
+    exit 3
+fi
+
+# --- Download PDF ---
+echo "[INFO] Downloading delivery note..."
+if ! curl -s -L -o "$TMPFILE" "$DELIVERY_URL"; then
+    echo "[ERROR] Failed to download delivery note."
+    exit 4
+fi
+
+# --- Print with retries ---
+MAX_RETRIES=3
+COUNT=0
+while [ $COUNT -lt $MAX_RETRIES ]; do
+    echo "[INFO] Sending to printer ($PRINTER@$CUPS_SERVER), attempt $((COUNT+1))..."
+    if lp -h "$CUPS_SERVER" -d "$PRINTER" "$TMPFILE"; then
+        echo "[SUCCESS] Print job sent for order $ORDER_ID."
+        rm -f "$TMPFILE"
+        exit 0
+    else
+        echo "[WARN] Print failed, retrying in 5s..."
+        sleep 5
+    fi
+    COUNT=$((COUNT+1))
+done
+
+echo "[ERROR] Failed to print after $MAX_RETRIES attempts."
+rm -f "$TMPFILE"
+exit 5
+
+

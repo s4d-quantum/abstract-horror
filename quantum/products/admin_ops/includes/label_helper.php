@@ -1,0 +1,395 @@
+<?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+/**
+ * Fetch an env value with fallbacks.
+ */
+function envValue($key, $default = null) {
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+        return $_ENV[$key];
+    }
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+        return $_SERVER[$key];
+    }
+    $value = getenv($key);
+    return ($value !== false && $value !== '') ? $value : $default;
+}
+
+/**
+ * Available print endpoints for label printing.
+ */
+function getAvailablePrintEndpoints() {
+    return [
+        'whzm4' => 'ZT410 Barcode Printer',
+        'whzm4_local' => 'ZT410 Barcode Printer LOCAL (10.118.20.176)',
+        'whzm600' => 'ZM600 Raw Print',
+        'whzm600_local' => 'ZM600 Raw Print LOCAL (10.118.20.176)',
+        'qc_zm4_300' => 'QC Zebra ZM4 (300dpi)',
+        'qc_zm4_300_local' => 'QC Zebra ZM4 (300dpi) LOCAL (10.118.20.136)',
+    ];
+}
+
+/**
+ * Endpoint to URL mapping for each selectable destination.
+ */
+function getPrintEndpointUrlMap() {
+    return [
+        'whzm4' => envValue('PRINT_ENDPOINT_WHZM4_CLOUD_URL', 'https://whprint.quantum-cloud.uk/whzm4'),
+        'whzm4_local' => envValue('PRINT_ENDPOINT_WHZM4_LOCAL_URL', 'http://10.118.20.176/whzm4'),
+        'whzm600' => envValue('PRINT_ENDPOINT_WHZM600_CLOUD_URL', 'https://whprint.quantum-cloud.uk/whzm600'),
+        'whzm600_local' => envValue('PRINT_ENDPOINT_WHZM600_LOCAL_URL', 'http://10.118.20.176/whzm600'),
+        'qc_zm4_300' => envValue('QC_PRINTER_URL', 'https://qc.quantum-cloud.co.uk/print'),
+        'qc_zm4_300_local' => envValue('QC_PRINTER_LOCAL_URL', 'http://10.118.20.136/print'),
+    ];
+}
+
+/**
+ * Determine whether endpoint uses the QC Zebra template.
+ */
+function isQcPrintEndpoint($endpoint) {
+    return in_array($endpoint, ['qc_zm4_300', 'qc_zm4_300_local'], true);
+}
+
+/**
+ * Resolve and store the chosen print endpoint per user/session.
+ */
+function resolvePrintEndpoint($requestedEndpoint = null) {
+    $available = array_keys(getAvailablePrintEndpoints());
+
+    if ($requestedEndpoint && in_array($requestedEndpoint, $available, true)) {
+        $_SESSION['label_print_endpoint'] = $requestedEndpoint;
+        return $requestedEndpoint;
+    }
+
+    if (isset($_SESSION['label_print_endpoint']) && in_array($_SESSION['label_print_endpoint'], $available, true)) {
+        return $_SESSION['label_print_endpoint'];
+    }
+
+    $default = envValue('PRINTSERVER_DEFAULT_ENDPOINT', 'whzm4');
+    if (!in_array($default, $available, true)) {
+        $default = 'whzm4';
+    }
+
+    $_SESSION['label_print_endpoint'] = $default;
+    return $default;
+}
+
+/**
+ * Build print server configuration for the current request.
+ */
+function getPrintServerConfig($mode = 'cloud', $endpoint = null) {
+    $resolvedEndpoint = resolvePrintEndpoint($endpoint);
+    $endpointUrlMap = getPrintEndpointUrlMap();
+    $isLocalEndpoint = substr($resolvedEndpoint, -6) === '_local';
+    $endpointPath = $isLocalEndpoint ? substr($resolvedEndpoint, 0, -6) : $resolvedEndpoint;
+
+    // Special handling for QC ZM4 printer
+    if (isQcPrintEndpoint($resolvedEndpoint)) {
+        $apiKey = envValue('QC_PRINTER_API_KEY', envValue('PRINTSERVER_API_KEY'));
+        $url = $endpointUrlMap[$resolvedEndpoint] ?? null;
+        
+        if (!$apiKey) {
+            return ['success' => false, 'message' => 'QC Printer API key is not configured.'];
+        }
+        if (!$url) {
+            return ['success' => false, 'message' => 'QC Printer URL is not configured.'];
+        }
+        
+        return [
+            'success' => true,
+            'url' => $url,
+            'api_key' => $apiKey,
+            'target_label' => $isLocalEndpoint ? 'QC Zebra ZM4 local printer' : 'QC Zebra ZM4'
+        ];
+    }
+
+    $apiKey = envValue('PRINTSERVER_API_KEY');
+
+    if (!$apiKey) {
+        return ['success' => false, 'message' => 'Print server API key is not configured.'];
+    }
+
+    $url = $endpointUrlMap[$resolvedEndpoint] ?? null;
+
+    // Backwards compatibility for explicit local mode (legacy path-based behavior).
+    if ($mode === 'local' && !$isLocalEndpoint) {
+        $localBase = envValue('PRINTSERVER_LOCAL_URL');
+        if ($localBase) {
+            $url = rtrim($localBase, '/') . '/' . ltrim($endpointPath, '/');
+        }
+    }
+
+    if (!$url) {
+        $baseUrl = $mode === 'local'
+            ? envValue('PRINTSERVER_LOCAL_URL')
+            : envValue('PRINTSERVER_BASE_URL', 'https://whprint.quantum-cloud.uk');
+
+        if (!$baseUrl) {
+            return ['success' => false, 'message' => 'Print server URL is not configured.'];
+        }
+
+        $url = rtrim($baseUrl, '/') . '/' . ltrim($endpointPath, '/');
+    }
+
+    return [
+        'success' => true,
+        'url' => $url,
+        'api_key' => $apiKey,
+        'target_label' => ($mode === 'local' || $isLocalEndpoint) ? 'local printer' : 'cloud printer'
+    ];
+}
+
+/**
+ * Send ZPL to printer over HTTP.
+ */
+function sendPrintRequest($url, $apiKey, $zpl, $targetLabel) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $zpl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-Key: ' . $apiKey,
+        'Content-Type: text/plain'
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($error) {
+        return [
+            'success' => false,
+            'message' => 'cURL error: ' . $error
+        ];
+    }
+
+    if ($httpCode >= 200 && $httpCode < 300) {
+        return [
+            'success' => true,
+            'message' => 'Label sent to ' . $targetLabel
+        ];
+    }
+
+    return [
+        'success' => false,
+        'message' => 'HTTP error ' . $httpCode . ': ' . $response
+    ];
+}
+
+/**
+ * Generate ZPL label code for a device
+ *
+ * @param string $brand Brand name (e.g., "Samsung")
+ * @param string $model Model name (e.g., "S928B/DS")
+ * @param string $storage Storage capacity (e.g., "256")
+ * @param string $color Color (e.g., "Titanium Grey")
+ * @param string $grade Grade (e.g., "A")
+ * @param string $imei IMEI number
+ * @return string ZPL code
+ */
+function generateZPL($brand, $model, $storage, $color, $grade, $imei, $endpoint = null) {
+    // Clean and prepare data
+    $brand = trim($brand);
+    $model = trim($model);
+    $storage = trim($storage);
+    $color = trim($color);
+    $grade = trim($grade);
+    $imei = trim($imei);
+
+    // Build device description line
+    // For QC printer, grade is handled separately in template
+    if (isQcPrintEndpoint($endpoint)) {
+        $deviceLine = "{$brand} {$model} {$storage}GB {$color}";
+    } else {
+        // For other printers, include grade in device line
+        $deviceLine = "{$brand} {$model} {$storage}GB {$color}";
+        if ($grade !== null && $grade !== '' && $grade !== 'N/A' && $grade !== 'Unknown') {
+            $deviceLine .= " Grade {$grade}";
+        }
+    }
+    
+    // User provided template for QC Zebra ZM4 (300dpi)
+    if (isQcPrintEndpoint($endpoint)) {
+        $zpl = "^XA\n";
+        $zpl .= "^CI0\n";
+        $zpl .= "^LS0\n";
+        $zpl .= "\n";
+        $zpl .= "^PW950\n";
+        $zpl .= "^LL450\n";
+        $zpl .= "\n";
+        $zpl .= "~SD15\n";
+        $zpl .= "^MD15\n";
+        $zpl .= "\n";
+        $zpl .= "^FX -------- TEXT --------\n";
+        $zpl .= "^FO00,30\n";
+        $zpl .= "^FB950,2,6,C,0\n";
+        $zpl .= "^A0N,44,40\n";
+        $zpl .= "^FD{$deviceLine}^FS\n";
+        $zpl .= "\n";
+        // Only include grade if it has a meaningful value
+        if ($grade !== null && $grade !== '' &&
+            $grade !== 'N/A' &&
+            $grade !== 'Unknown' &&
+            strtolower($grade) !== 'grade' &&
+            $grade !== ' ') {
+            $zpl .= "^FO00,100\n";
+            $zpl .= "^FB950,1,0,C,0\n";
+            $zpl .= "^A0N,44,40\n";
+            $zpl .= "^FDGrade {$grade}^FS\n";
+            $zpl .= "\n";
+        }
+        $zpl .= "^FX -------- BARCODE --------\n";
+        $zpl .= "^BY2.5,3,100\n";
+        $zpl .= "^FO180,185\n";
+        $zpl .= "^BCN,120,Y,N,N\n";
+        $zpl .= "^FD{$imei}^FS\n";
+        $zpl .= "\n";
+        $zpl .= "^PQ1\n";
+        $zpl .= "^XZ\n";
+
+        return $zpl;
+    }
+
+    // Generate ZPL for ZT410 (203dpi) - based on verified working template
+    $zpl = "^XA\n";
+    $zpl .= "^PW609\n";
+    $zpl .= "^LL304\n";
+    $zpl .= "^LS0\n";
+    $zpl .= "\n";
+    $zpl .= "~SD15\n";
+    $zpl .= "^MD15\n";
+    $zpl .= "^CI0\n";
+    $zpl .= "\n";
+    $zpl .= "^BY2,3,54\n";
+    $zpl .= "\n";
+
+    // Text - centered, allows 2 lines with line spacing
+    $zpl .= "^FO10,45\n";
+    $zpl .= "^FB549,2,6,C,0\n";
+    $zpl .= "^A0N,36,32\n";
+    $zpl .= "^FD{$deviceLine}^FS\n";
+    $zpl .= "\n";
+
+    // Barcode - NO FB! Left margin provides quiet zone for scanning
+    $zpl .= "^FO60,160\n";
+    $zpl .= "^BCN,54,Y,N\n";
+    $zpl .= "^FD{$imei}^FS\n";
+    $zpl .= "\n";
+
+    $zpl .= "^PQ1\n";
+    $zpl .= "^XZ\n";
+
+    return $zpl;
+}
+
+/**
+ * Print ZPL label via webhook or local server
+ *
+ * @param string $zpl ZPL code to print
+ * @param string $mode 'cloud' or 'local'
+ * @param string|null $endpoint Print endpoint path (e.g., whzm4)
+ * @return array Result with 'success' and 'message'
+ */
+function printLabel($zpl, $mode = 'cloud', $endpoint = null) {
+    $resolvedEndpoint = resolvePrintEndpoint($endpoint);
+
+    if ($mode === 'local') {
+        return printLabelLocal($zpl, $resolvedEndpoint);
+    }
+
+    return printLabelCloud($zpl, $resolvedEndpoint);
+}
+
+/**
+ * Print label via cloud webhook
+ */
+function printLabelCloud($zpl, $endpoint) {
+    $config = getPrintServerConfig('cloud', $endpoint);
+    if (!$config['success']) {
+        return [
+            'success' => false,
+            'message' => $config['message']
+        ];
+    }
+
+    return sendPrintRequest($config['url'], $config['api_key'], $zpl, $config['target_label']);
+}
+
+/**
+ * Print label via local server
+ */
+function printLabelLocal($zpl, $endpoint) {
+    $config = getPrintServerConfig('local', $endpoint);
+    if (!$config['success']) {
+        return [
+            'success' => false,
+            'message' => $config['message']
+        ];
+    }
+
+    return sendPrintRequest($config['url'], $config['api_key'], $zpl, $config['target_label']);
+}
+
+/**
+ * Lookup device information from database
+ *
+ * @param mysqli $conn Database connection
+ * @param string $imei IMEI number
+ * @return array|null Device data or null if not found
+ */
+function lookupDeviceInfo($conn, $imei) {
+    $imei = mysqli_real_escape_string($conn, trim($imei));
+
+    $sql = "SELECT * FROM v_imei_lookup WHERE item_imei = '{$imei}'";
+    $result = mysqli_query($conn, $sql);
+
+    if (!$result) {
+        error_log("SQL Error in lookupDeviceInfo: " . mysqli_error($conn));
+        error_log("SQL Query: " . $sql);
+        return null;
+    }
+
+    $data = mysqli_fetch_assoc($result);
+    mysqli_free_result($result);
+
+    // Return false if no data found (instead of null which is ambiguous)
+    if (!$data) {
+        return false;
+    }
+
+    return $data;
+}
+
+/**
+ * Format device info for display
+ */
+function formatDeviceInfo($deviceData) {
+    if (!$deviceData) {
+        return 'Unknown Device';
+    }
+
+    $info = sprintf(
+        '%s %s %sGb %s',
+        $deviceData['brand_name'],
+        $deviceData['model_name'],
+        $deviceData['item_gb'],
+        $deviceData['item_color']
+    );
+
+    // Only include grade if it has a meaningful value
+    $grade = isset($deviceData['grade_title']) ? trim($deviceData['grade_title']) : '';
+    if ($grade !== null && $grade !== '' &&
+        $grade !== 'N/A' &&
+        $grade !== 'Unknown' &&
+        strtolower($grade) !== 'grade' &&
+        $grade !== ' ') {
+        $info .= ' Grade ' . $grade;
+    }
+
+    return $info;
+}

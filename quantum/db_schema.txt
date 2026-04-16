@@ -1,0 +1,1101 @@
+/*M!999999\- enable the sandbox mode */ 
+-- MariaDB dump 10.19  Distrib 10.11.13-MariaDB, for debian-linux-gnu (x86_64)
+--
+-- Host: 216.205.173.69    Database: s4d_england_db
+-- ------------------------------------------------------
+-- Server version	10.11.13-MariaDB-0ubuntu0.24.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `dpd_status`
+--
+
+DROP TABLE IF EXISTS `dpd_status`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `dpd_status` (
+  `order_id` int(11) NOT NULL,
+  `tracking_no` varchar(255) DEFAULT NULL,
+  `parcel_status` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `level3_repair`
+--
+
+DROP TABLE IF EXISTS `level3_repair`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `level3_repair` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date NOT NULL,
+  `manufacturer` varchar(100) DEFAULT NULL,
+  `model` varchar(100) DEFAULT NULL,
+  `item_imei` bigint(20) DEFAULT NULL,
+  `fault` text DEFAULT NULL,
+  `engineer_notes` text DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `tray_id` varchar(50) DEFAULT NULL,
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=287 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accessories_order_return`
+--
+
+DROP TABLE IF EXISTS `tbl_accessories_order_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accessories_order_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `return_id` int(100) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `order_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accessories_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_accessories_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accessories_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `customer_id` varchar(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `po_box` varchar(10) DEFAULT NULL,
+  `delivery_company` varchar(50) DEFAULT NULL,
+  `total_pallets` int(10) DEFAULT NULL,
+  `total_boxes` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`,`product_id`,`item_qty`,`customer_id`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2012 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accessories_products`
+--
+
+DROP TABLE IF EXISTS `tbl_accessories_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accessories_products` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) DEFAULT NULL,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=183 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accessories_purchase_return`
+--
+
+DROP TABLE IF EXISTS `tbl_accessories_purchase_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accessories_purchase_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `return_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accessories_purchases`
+--
+
+DROP TABLE IF EXISTS `tbl_accessories_purchases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accessories_purchases` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `product_id` int(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `supplier_id` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  `po_ref` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=678 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accounts`
+--
+
+DROP TABLE IF EXISTS `tbl_accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accounts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `user_name` varchar(20) DEFAULT NULL,
+  `user_db` varchar(50) DEFAULT NULL,
+  `user_email` varchar(100) DEFAULT NULL,
+  `user_password` varchar(100) NOT NULL,
+  `user_role` varchar(10) DEFAULT NULL,
+  `user_phone` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  UNIQUE KEY `user_email` (`user_email`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accounts_14-7-23`
+--
+
+DROP TABLE IF EXISTS `tbl_accounts_14-7-23`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accounts_14-7-23` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `user_name` varchar(100) DEFAULT NULL,
+  `user_email` varchar(100) DEFAULT NULL,
+  `user_password` varchar(100) DEFAULT NULL,
+  `user_phone` varchar(100) DEFAULT NULL,
+  `user_role` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`,`user_email`),
+  UNIQUE KEY `user_email` (`user_email`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_accounts_old`
+--
+
+DROP TABLE IF EXISTS `tbl_accounts_old`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_accounts_old` (
+  `user_id` int(11) NOT NULL,
+  `user_name` varchar(100) DEFAULT NULL,
+  `user_email` varchar(100) DEFAULT NULL,
+  `user_password` varchar(100) DEFAULT NULL,
+  `user_phone` varchar(100) DEFAULT NULL,
+  `user_role` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_adminops`
+--
+
+DROP TABLE IF EXISTS `tbl_adminops`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_adminops` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date NOT NULL DEFAULT curdate(),
+  `time` time NOT NULL DEFAULT curtime(),
+  `user_id` varchar(50) NOT NULL,
+  `operation` text NOT NULL,
+  `reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `date` (`date`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_adminops_devices`
+--
+
+DROP TABLE IF EXISTS `tbl_adminops_devices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_adminops_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `adminop_id` int(11) NOT NULL,
+  `item_imei` varchar(20) NOT NULL,
+  `old_tray_id` varchar(20) DEFAULT NULL,
+  `new_tray_id` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `adminop_id` (`adminop_id`),
+  KEY `item_imei` (`item_imei`),
+  KEY `old_tray_id` (`old_tray_id`),
+  KEY `new_tray_id` (`new_tray_id`),
+  CONSTRAINT `tbl_adminops_devices_ibfk_1` FOREIGN KEY (`adminop_id`) REFERENCES `tbl_adminops` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_bm2`
+--
+
+DROP TABLE IF EXISTS `tbl_bm2`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_bm2` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `bm_order_id` bigint(20) NOT NULL,
+  `company` varchar(255) DEFAULT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `street` varchar(255) DEFAULT NULL,
+  `street_2` varchar(255) DEFAULT NULL,
+  `postal_code` varchar(20) DEFAULT NULL,
+  `country` varchar(10) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `delivery_note` text DEFAULT NULL,
+  `orderlines` longtext DEFAULT NULL,
+  `consignment_no` varchar(50) DEFAULT NULL,
+  `parcel_no` varchar(50) DEFAULT NULL,
+  `shipment_no` varchar(50) DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `shipment_id` varchar(50) DEFAULT NULL,
+  `v_building_number` varchar(50) DEFAULT NULL,
+  `v_thoroughfare` varchar(255) DEFAULT NULL,
+  `v_line_1` varchar(255) DEFAULT NULL,
+  `v_line_2` varchar(255) DEFAULT NULL,
+  `v_line_3` varchar(255) DEFAULT NULL,
+  `v_line_4` varchar(255) DEFAULT NULL,
+  `v_postcode` varchar(20) DEFAULT NULL,
+  `v_town` varchar(255) DEFAULT NULL,
+  `v_county` varchar(255) DEFAULT NULL,
+  `v_country` varchar(100) DEFAULT NULL,
+  `v_status` int(11) DEFAULT NULL,
+  `date` date NOT NULL DEFAULT curdate(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_categories`
+--
+
+DROP TABLE IF EXISTS `tbl_categories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_categories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) DEFAULT NULL,
+  `category_id` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id` (`id`),
+  KEY `idx_categories_category_id` (`category_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_customers`
+--
+
+DROP TABLE IF EXISTS `tbl_customers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_customers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `customer_id` varchar(100) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `address` varchar(100) DEFAULT NULL,
+  `phone` varchar(100) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `country` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `address2` varchar(100) DEFAULT NULL,
+  `postcode` varchar(10) DEFAULT NULL,
+  `vat` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_flash_descriptions`
+--
+
+DROP TABLE IF EXISTS `tbl_flash_descriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_flash_descriptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `desc_id` int(10) DEFAULT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_gb`
+--
+
+DROP TABLE IF EXISTS `tbl_gb`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_gb` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `gb_value` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_grades`
+--
+
+DROP TABLE IF EXISTS `tbl_grades`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_grades` (
+  `grade_id` int(11) NOT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`grade_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_imei`
+--
+
+DROP TABLE IF EXISTS `tbl_imei`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_imei` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_imei` varchar(100) DEFAULT NULL,
+  `item_tac` varchar(100) DEFAULT NULL,
+  `item_color` varchar(100) DEFAULT NULL,
+  `item_grade` int(11) DEFAULT 0,
+  `item_gb` varchar(100) DEFAULT NULL,
+  `purchase_id` int(100) DEFAULT NULL,
+  `status` int(10) DEFAULT NULL,
+  `unit_confirmed` int(10) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `goodsin_color` varchar(100) DEFAULT NULL,
+  `oem_color` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id` (`id`),
+  KEY `item_imei` (`item_imei`,`item_tac`,`purchase_id`,`status`),
+  KEY `idx_imei_basic` (`item_imei`,`item_tac`,`status`),
+  KEY `idx_imei_status_tac_imei` (`status`,`item_tac`,`item_imei`),
+  KEY `idx_imei_tac_purchase_status` (`item_tac`,`purchase_id`,`status`),
+  KEY `idx_imei_purchase_status` (`purchase_id`,`status`),
+  KEY `idx_imei_imei` (`item_imei`)
+) ENGINE=InnoDB AUTO_INCREMENT=361835 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_imei_sales_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_imei_sales_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_imei_sales_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) DEFAULT NULL,
+  `customer_id` varchar(10) DEFAULT NULL,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_details` varchar(100) DEFAULT NULL,
+  `item_color` varchar(100) DEFAULT NULL,
+  `item_grade` varchar(10) DEFAULT NULL,
+  `item_gb` varchar(10) DEFAULT NULL,
+  `date` datetime DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `is_completed` int(11) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `goodsout_order_id` int(10) DEFAULT NULL,
+  `po_ref` varchar(100) DEFAULT NULL,
+  `customer_ref` varchar(100) DEFAULT NULL,
+  `supplier_id` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_imei_sales_orders_code_complete` (`item_code`,`is_completed`),
+  KEY `idx_imei_sales_orders_order_id` (`order_id`),
+  KEY `idx_sales_orders_customer_date` (`customer_id`,`date`),
+  KEY `idx_sales_orders_order_id` (`order_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=590677 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_log`
+--
+
+DROP TABLE IF EXISTS `tbl_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `details` varchar(100) DEFAULT NULL,
+  `ref` varchar(100) DEFAULT NULL,
+  `auto_time` datetime DEFAULT current_timestamp(),
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_id` (`id`),
+  KEY `idx_item_code_id` (`item_code`,`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3624960 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_log20-7-2023(user_id shuffled)`
+--
+
+DROP TABLE IF EXISTS `tbl_log20-7-2023(user_id shuffled)`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_log20-7-2023(user_id shuffled)` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `details` varchar(100) DEFAULT NULL,
+  `ref` varchar(100) DEFAULT NULL,
+  `auto_time` datetime DEFAULT current_timestamp(),
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_id` (`id`),
+  KEY `idx_date` (`date`)
+) ENGINE=InnoDB AUTO_INCREMENT=2226899 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_log_010125`
+--
+
+DROP TABLE IF EXISTS `tbl_log_010125`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_log_010125` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `details` varchar(100) DEFAULT NULL,
+  `ref` varchar(100) DEFAULT NULL,
+  `auto_time` datetime DEFAULT current_timestamp(),
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3053646 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_log_17-7-23`
+--
+
+DROP TABLE IF EXISTS `tbl_log_17-7-23`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_log_17-7-23` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `details` varchar(100) DEFAULT NULL,
+  `ref` varchar(100) DEFAULT NULL,
+  `auto_time` datetime DEFAULT current_timestamp(),
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_id` (`id`),
+  KEY `idx_date` (`date`)
+) ENGINE=InnoDB AUTO_INCREMENT=2222926 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_order_return`
+--
+
+DROP TABLE IF EXISTS `tbl_order_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_order_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `return_id` int(10) DEFAULT NULL,
+  `item_imei` varchar(100) DEFAULT NULL,
+  `order_id` int(100) DEFAULT NULL,
+  `date` date NOT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10411 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) NOT NULL,
+  `item_imei` varchar(100) DEFAULT NULL,
+  `customer_id` varchar(100) NOT NULL,
+  `date` date NOT NULL,
+  `po_box` varchar(100) DEFAULT NULL,
+  `tracking_no` varchar(50) DEFAULT NULL,
+  `customer_ref` varchar(100) DEFAULT NULL,
+  `delivery_company` varchar(100) DEFAULT NULL,
+  `total_boxes` int(10) DEFAULT NULL,
+  `total_pallets` int(10) DEFAULT NULL,
+  `order_return` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `unit_confirmed` int(10) DEFAULT NULL,
+  `has_return_tag` int(10) DEFAULT NULL,
+  `is_delivered` int(5) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `item_imei` (`item_imei`),
+  KEY `order_return` (`order_return`,`user_id`),
+  KEY `idx_orders_order_id_return` (`order_id`,`order_return`)
+) ENGINE=InnoDB AUTO_INCREMENT=396751 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_parts_order_return`
+--
+
+DROP TABLE IF EXISTS `tbl_parts_order_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_parts_order_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `return_id` int(100) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `order_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_parts_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_parts_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_parts_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `customer_id` varchar(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `linked_pid` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`,`product_id`,`item_qty`,`customer_id`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4143 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_parts_products`
+--
+
+DROP TABLE IF EXISTS `tbl_parts_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_parts_products` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) DEFAULT NULL,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_model` varchar(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `item_color` varchar(100) DEFAULT NULL,
+  `item_tac` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=881 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_parts_purchase_return`
+--
+
+DROP TABLE IF EXISTS `tbl_parts_purchase_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_parts_purchase_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `product_id` int(10) DEFAULT NULL,
+  `return_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=452 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_parts_purchases`
+--
+
+DROP TABLE IF EXISTS `tbl_parts_purchases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_parts_purchases` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `product_id` int(100) DEFAULT NULL,
+  `item_qty` int(10) DEFAULT NULL,
+  `supplier_id` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  `po_ref` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5889 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_purchase_return`
+--
+
+DROP TABLE IF EXISTS `tbl_purchase_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_purchase_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `return_id` int(100) DEFAULT NULL,
+  `item_imei` varchar(100) DEFAULT NULL,
+  `date` varchar(100) DEFAULT NULL,
+  `purchase_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  `tracking_no` varchar(50) DEFAULT NULL,
+  `delivery_company` varchar(100) DEFAULT NULL,
+  `is_delivered` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `return_id` (`return_id`,`item_imei`,`purchase_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=41443 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_purchases`
+--
+
+DROP TABLE IF EXISTS `tbl_purchases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_purchases` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(10) NOT NULL,
+  `item_imei` varchar(100) DEFAULT NULL,
+  `date` date NOT NULL,
+  `supplier_id` varchar(10) NOT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `qc_required` int(10) DEFAULT NULL,
+  `qc_completed` int(10) DEFAULT NULL,
+  `repair_required` int(10) DEFAULT NULL,
+  `repair_completed` int(10) DEFAULT NULL,
+  `purchase_return` int(10) DEFAULT NULL,
+  `priority` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  `po_ref` varchar(50) DEFAULT NULL,
+  `has_return_tag` int(5) DEFAULT NULL,
+  `unit_confirmed` int(5) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_purchases_full` (`item_imei`,`supplier_id`,`purchase_return`,`qc_required`,`qc_completed`,`purchase_id`),
+  KEY `idx_purchases_qc_supplier` (`qc_required`,`supplier_id`,`purchase_id`),
+  KEY `idx_purchases_qc_repair_combo` (`qc_required`,`repair_required`,`repair_completed`,`supplier_id`,`purchase_id`,`id`),
+  KEY `idx_purchases_date_id` (`date`,`purchase_id`),
+  KEY `idx_purchases_supplier_date` (`supplier_id`,`date`,`purchase_id`),
+  KEY `idx_purchases_supplier_simple` (`supplier_id`,`purchase_id`),
+  KEY `idx_purchases_imei_supplier_opt` (`item_imei`,`supplier_id`,`purchase_return`,`qc_required`,`qc_completed`),
+  KEY `idx_repair_purchase_id` (`repair_required`,`purchase_id`,`id`),
+  KEY `idx_qc_required_completed` (`qc_required`,`qc_completed`,`purchase_id`),
+  KEY `idx_purchases_tray_return` (`tray_id`,`purchase_return`),
+  KEY `idx_purchases_item_imei` (`item_imei`),
+  KEY `idx_purchases_priority_supplier` (`priority`,`date`,`supplier_id`),
+  KEY `idx_purchases_optimized` (`priority`,`supplier_id`,`date`),
+  KEY `idx_purchases_purchase_id` (`purchase_id`),
+  KEY `idx_purchases_date` (`date`)
+) ENGINE=InnoDB AUTO_INCREMENT=393623 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_qc_imei_products`
+--
+
+DROP TABLE IF EXISTS `tbl_qc_imei_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_qc_imei_products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `item_comments` varchar(1000) DEFAULT NULL,
+  `item_cosmetic_passed` int(10) DEFAULT NULL,
+  `item_functional_passed` int(10) DEFAULT NULL,
+  `item_flashed` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `item_eu` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `item_code` (`item_code`,`item_comments`(767),`item_cosmetic_passed`,`item_functional_passed`,`item_flashed`,`user_id`),
+  KEY `idx_qc_check` (`item_code`,`purchase_id`,`item_cosmetic_passed`,`item_functional_passed`)
+) ENGINE=InnoDB AUTO_INCREMENT=169823 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_qc_serial_products`
+--
+
+DROP TABLE IF EXISTS `tbl_qc_serial_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_qc_serial_products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `item_comments` varchar(1000) DEFAULT NULL,
+  `item_cosmetic_passed` int(10) DEFAULT NULL,
+  `item_functional_passed` int(10) DEFAULT NULL,
+  `item_flashed` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `item_eu` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_id` (`purchase_id`,`item_code`,`item_comments`(767),`item_cosmetic_passed`,`item_functional_passed`,`item_flashed`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10560 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_repair_imei_parts`
+--
+
+DROP TABLE IF EXISTS `tbl_repair_imei_parts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_repair_imei_parts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_code` varchar(50) DEFAULT NULL,
+  `purchase_id` int(10) DEFAULT NULL,
+  `part_id` int(10) DEFAULT NULL,
+  `part_qty` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `item_code` (`item_code`,`purchase_id`,`part_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=92593 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_repair_imei_products`
+--
+
+DROP TABLE IF EXISTS `tbl_repair_imei_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_repair_imei_products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` varchar(10) DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_comments` varchar(100) DEFAULT NULL,
+  `user_id` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_id` (`purchase_id`,`item_code`),
+  KEY `item_comments` (`item_comments`)
+) ENGINE=InnoDB AUTO_INCREMENT=480 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_order_return`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_order_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_order_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `return_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `order_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=801 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `customer_id` varchar(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `po_box` varchar(100) DEFAULT NULL,
+  `delivery_company` varchar(100) DEFAULT NULL,
+  `total_boxes` int(10) DEFAULT NULL,
+  `total_pallets` int(10) DEFAULT NULL,
+  `order_return` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `unit_confirmed` int(10) DEFAULT NULL,
+  `has_return_tag` int(10) DEFAULT NULL,
+  `is_delivered` int(5) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `item_code` (`item_code`,`order_return`)
+) ENGINE=InnoDB AUTO_INCREMENT=92066 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_products`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `item_grade` int(10) DEFAULT NULL,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_details` varchar(1000) DEFAULT NULL,
+  `status` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_id` (`purchase_id`,`item_code`,`item_brand`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=74074 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_purchase_return`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_purchase_return`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_purchase_return` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` date DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `return_id` int(100) DEFAULT NULL,
+  `purchase_id` int(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3664 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_purchases`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_purchases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_purchases` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `purchase_id` int(100) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `supplier_id` varchar(100) DEFAULT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `qc_required` int(10) DEFAULT NULL,
+  `qc_completed` int(10) DEFAULT NULL,
+  `purchase_return` int(10) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `report_comment` varchar(500) DEFAULT NULL,
+  `priority` int(11) DEFAULT NULL,
+  `po_ref` varchar(50) DEFAULT NULL,
+  `has_return_tag` int(5) DEFAULT NULL,
+  `unit_confirmed` int(5) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_id` (`purchase_id`,`item_code`,`supplier_id`,`qc_required`,`qc_completed`,`purchase_return`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=72674 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_serial_sales_orders`
+--
+
+DROP TABLE IF EXISTS `tbl_serial_sales_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_serial_sales_orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(100) DEFAULT NULL,
+  `customer_id` varchar(10) DEFAULT NULL,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_details` varchar(100) DEFAULT NULL,
+  `item_color` varchar(100) DEFAULT NULL,
+  `item_grade` varchar(10) DEFAULT NULL,
+  `item_gb` int(10) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `is_completed` int(11) DEFAULT NULL,
+  `item_code` varchar(100) DEFAULT NULL,
+  `goodsout_order_id` int(10) DEFAULT NULL,
+  `po_ref` varchar(100) DEFAULT NULL,
+  `supplier_id` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=117094 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_settings`
+--
+
+DROP TABLE IF EXISTS `tbl_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dpd_user` varchar(50) DEFAULT NULL,
+  `dpd_pass` varchar(100) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `company_title` varchar(100) DEFAULT NULL,
+  `logo_image` varchar(200) DEFAULT NULL,
+  `postcode` varchar(20) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `vat` varchar(30) DEFAULT NULL,
+  `eroi_no` varchar(30) DEFAULT NULL,
+  `company_registration_no` varchar(30) DEFAULT NULL,
+  `address` varchar(100) DEFAULT NULL,
+  `city` varchar(30) DEFAULT NULL,
+  `country` varchar(20) DEFAULT NULL,
+  `bm_collection_cutoff` varchar(5) DEFAULT '13:30',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_subcategories`
+--
+
+DROP TABLE IF EXISTS `tbl_subcategories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_subcategories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subcategory_id` varchar(100) DEFAULT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  `category_id` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_suppliers`
+--
+
+DROP TABLE IF EXISTS `tbl_suppliers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_suppliers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `supplier_id` varchar(100) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `address` varchar(100) DEFAULT NULL,
+  `phone` varchar(100) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `country` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `address2` varchar(100) DEFAULT NULL,
+  `postcode` varchar(10) DEFAULT NULL,
+  `vat` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=273 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_tac`
+--
+
+DROP TABLE IF EXISTS `tbl_tac`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_tac` (
+  `item_tac` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `item_details` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_brand` varchar(100) DEFAULT NULL,
+  `item_gb1` int(10) DEFAULT NULL,
+  `item_color1` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `item_tac` (`item_tac`,`item_details`,`item_brand`),
+  KEY `idx_tac_tac_brand` (`item_tac`,`item_brand`),
+  KEY `idx_tac_brand_tac` (`item_brand`,`item_tac`)
+) ENGINE=InnoDB AUTO_INCREMENT=5099 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tbl_trays`
+--
+
+DROP TABLE IF EXISTS `tbl_trays`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tbl_trays` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tray_id` varchar(100) DEFAULT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `locked` tinyint(1) NOT NULL DEFAULT 0,
+  `locked_by` int(11) DEFAULT NULL,
+  `locked_at` datetime DEFAULT NULL,
+  `lock_note` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_trays_tray_id` (`tray_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=310 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-10-21 10:40:29

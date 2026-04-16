@@ -1,0 +1,237 @@
+# Ideal Postcodes
+
+> Add address search and validation in moments
+
+- [Ideal Postcodes](/index.md)
+
+## docs
+
+- [Changelog](/docs/changelog.md): Stay informed about the latest updates and improvements to our address validation services with our changelog. View release notes and see what's new.
+- [Glossary](/docs/glossary.md): ---
+
+### Address Finder
+
+Add Address Validation to your address forms in moments with our Address Finder JavaScript package. Simple and quick set up. Guides and live technical support available.
+
+- [Address Finder](/docs/address-finder.md): Add Address Validation to your address forms in moments with our Address Finder JavaScript package. Simple and quick set up. Guides and live technical support available.
+- [Additional Configuration](/docs/address-finder/additional-configuration.md): Separate Input Field
+- [Retrieve Additional Data](/docs/address-finder/additional-data.md): You can retrieve more data for an address by passing more arguments into .
+- [Bias By Geolocation](/docs/address-finder/bias-by-geolocation.md): Bias search to a geospatial circle determined by an origin and radius in meters. Max radius is 50000.
+- [Bias By IP](/docs/address-finder/bias-by-ip.md): Biases search based on approximate geolocation of an IP address. Set bias_ip to true within queryOptions to enable.
+- [Bias By Postcode Outward](/docs/address-finder/bias-by-postcode.md): Static Postcode Outward
+- [Callbacks](/docs/address-finder/callbacks.md): Address Finder also provides callbacks which let you hook the following events:
+- [Configure](/docs/address-finder/configure.md): Address Finder exports a  method to apply address verification to a form.  requires the following configuration at minimum.
+- [Convert ISO-3 to ISO-2](/docs/address-finder/convert-iso-code.md): By default, the Ideal Postcodes API returns country code in ISO-3 format.
+- [CSS Classes](/docs/address-finder/css-classes.md): The Address Finder can be styled CSS classes.
+- [Setting the default country](/docs/address-finder/default-country.md): detectCountry disables the country detection on Address Finder and defaultCountry sets the default country.
+- [Default Styling](/docs/address-finder/default-styling.md): Address Finder's default styling works by injecting a style tag into the document head.
+- [Detach and Re-attach Address Finder on your form](/docs/address-finder/detach-reattach-af.md): Detaching Address Finder
+- [Filter By Country](/docs/address-finder/filter-by-country.md): Display address results that matches the chosen country (England, Wales, Scotland, Northern Ireland, Jersey, Guernsey and Isle of Man )) using queryOptions.
+- [Filter By Geospatial Box](/docs/address-finder/filter-by-geospatial-box.md): Restrict search to a geospatial box determined by the "top-left" and "bottom-right" gelocations.
+- [Filter By Locality](/docs/address-finder/filter-by-locality.md): Display address results that matches the chosen locality, like a post town (post_town) using queryOptions.
+- [Filter By Postcode Outward](/docs/address-finder/filter-by-postcode.md): Display address results that matches the chosen postcode outward value.
+- [Hide Address Fields](/docs/address-finder/hide.md): Hide
+- [How it Works](/docs/address-finder/how-it-works.md): Address Finder can be attached to any form with pre-existing address inputs.
+- [Checking the usability of your key](/docs/address-finder/key-usability.md): Your key may not be available at some times. For instance:
+- [Messages](/docs/address-finder/messages.md): Address Finder uses a small default set of messages to communicate specific events to the user. All of Address Finder's default messages can be overridden. They are outlined below:
+- [Attach Multiple Instances](/docs/address-finder/multiple.md): Address Finder can be invoked multiple times to attach multiple instances to your forms.
+- [Package Manager (npm)](/docs/address-finder/npm.md): Address Finder is also available without transpilation or minification on npm as @ideal-postcodes/address-finder.
+- [Vertically Shift Address Finder](/docs/address-finder/nudge-address-finder.md): From time to time, you may want to tweak the default style of Address Finder to better match your applications design system.
+- [Omit Company Name](/docs/address-finder/omit-organisation.md): In many countries including the UK, the organisation name will take presidence as the first line of an address if it is present.
+- [Prevent Autofill](/docs/address-finder/prevent-autofill.md): Sets the autocomplete= attribute of the input element. Setting this attribute aims to prevent some browsers (particularly Chrome) from providing a clashing autofill overlay.
+- [Add to your React Application](/docs/address-finder/react.md): This example deploys Address Finder with React.
+- [Restrict search to chosen countries](/docs/address-finder/restrict-country.md): Narrow the countries you wish to support
+- [Drop-In Script](/docs/address-finder/script.md): Address Finder is shipped in a polyfilled, typed and minified package called address-finder-bundled.
+- [Separate Input from Address](/docs/address-finder/separate-input.md): Specify an  to apply the Address Finder to a field other than the first line of the address.
+- [Display Address in One Line](/docs/address-finder/single-field.md): Instead of writing each address attributes to individual fields, you may exercise fine control about how address data is presented using the  callback.
+- [Split Address Lines](/docs/address-finder/split-address-lines.md): If an address line is returned with more than one address element. It can be separated and displayed on a separate line.
+- [Style with JavaScript](/docs/address-finder/style-js.md): It's possible that the default styling may require a small tweak to allow it to better match your design and site aesthetic. Rather than adding CSS assets, we recommend applying a style attribute as a setup configuration option. The configurations below apply a style attributely directly to a specific element of the address finder.
+
+### API Reference
+
+- [API](/docs/api.md)
+- [Cleanse Address](/docs/api/address-cleanse.md): The address cleanse API attempts to return the closest matching address for any given address inputs. We also return a number of Match Level indicators that describe the degree to which the suggested address matches the input address. The more impaired the input address, the harder it is to cleanse.
+- [Address Finder](/docs/api/address-search.md): Address Finder
+- [Extract Addresses](/docs/api/addresses.md): Extract a list of complete addresses that match the query ordered by relevance score. This query accepts an optional limit and page query (defaults to 10 and 0 respectively).
+- [API Reference](/docs/api/api-reference.md): ## Getting Started
+- [Create](/docs/api/create-config.md): Create a configuration
+- [Create](/docs/api/create-licensee.md): Create a licensee for the specified API Key.
+- [Delete](/docs/api/delete-config.md): Permanently deletes a configuration object.
+- [Cancel](/docs/api/delete-licensee.md): Cancels a licensee key. This renders a licensee unusable. This action can be reversed if you get in contact with us.
+- [Email Validation](/docs/api/email-validation.md): Query for and validate email addresses.
+- [Find Address](/docs/api/find-address.md): The Address Autocomplete API delivers address suggestions in order of relevance based on a provided query. It aids real-time address autofill implementations.
+- [Find Place](/docs/api/find-place.md): Query for geographical places across countries. Each query will return a list of place suggestions, which consists of a place name, descriptive name and id.
+- [Availability](/docs/api/key-availability.md): Returns public information on your API Key.
+- [Details](/docs/api/key-details.md): Returns private data on the key including remaining lookups, available datasets and usage limits.
+- [Logs (CSV)](/docs/api/key-logs.md): Reports lookup information on a key for paid lookups.
+- [Usage Stats](/docs/api/key-usage.md): Reports the number of lookups consumed on a key for a range of days.
+- [Keys](/docs/api/keys.md): Keys
+- [Licensees](/docs/api/licensees.md): Licensees
+- [List](/docs/api/list-configs.md): Lists configurations associated with a key
+- [List](/docs/api/list-licensees.md): Returns a list of licensees for a key.
+- [Phone Number Validation](/docs/api/phone-number-validation.md): Query for and validate phone numbers.
+- [Place Search](/docs/api/place-search.md): Place Search
+- [Lookup Postcode](/docs/api/postcodes.md): Returns the complete list of addresses for a postcode. Postcode searches are space and case insensitive.
+- [Resolve Address](/docs/api/resolve-address.md): Resolves an address autocompletion by its address ID.
+- [Resolve Place](/docs/api/resolve-place.md): Resolves a place autocompletion by its place ID.
+- [Retrieve Address](/docs/api/retrieve-address.md): Resolves an address autocompletion by its address ID.
+- [Retrieve](/docs/api/retrieve-config.md): Retrieve configuration object by name
+- [Retrieve](/docs/api/retrieve-licensee.md): Returns licensee information as identified by the licensee key.
+- [Retrieve by UDPRN](/docs/api/udprn.md): Returns an address as identified by its Unique Delivery Point Reference Number (UDPRN).
+- [UK](/docs/api/uk.md): UK
+- [Retrieve by UMPRN](/docs/api/umprn.md): Returns a multiple occupancy address identifited via its UMPRN (Multiple Residence Unique ID).
+- [Update](/docs/api/update-config.md): Updates configuration object
+- [Update Details](/docs/api/update-key-details.md): Update API Key Details
+- [Update](/docs/api/update-licensee.md): Update Licensee
+
+### Data
+
+Our address search and verification APIs provide UK and international address data. Datasets are sourced/licensed from authoritative national providers for accuracy and compatibility with local address formats.
+
+- [Global and UK Datasets](/docs/data.md): Our address search and verification APIs provide UK and international address data. Datasets are sourced/licensed from authoritative national providers for accuracy and compatibility with local address formats.
+- [UK Address Form](/docs/data/address-form.md): To capture the standard UK address,
+- [AddressBase Core](/docs/data/addressbase-core.md): Essential Elements
+- [Canada National Address Register](/docs/data/cannar.md): General Information
+- [AddressBase Classification Codes](/docs/data/classification-codes.md): The AddressBase Classification Codes provides additional identifiers not available on Royal Mail PAF.
+- [IE Address (ECAD)](/docs/data/ecad.md): ECAF file including additional data for each address.
+- [IE Address (ECAF)](/docs/data/ecaf.md): Essential Elements
+- [Find an Address by UPRN](/docs/data/find-address-by-uprn.md): Filtering by UPRN. Does not accept comma separated terms. Only a single term is permitted
+- [FODBOSA](/docs/data/fodbosa.md): Core Metadata
+- [Geonames](/docs/data/geonames.md): Geoname ID
+- [Geocoded National Address File](/docs/data/gnaf.md): Essential Elements
+- [HERE Global Address](/docs/data/here.md): HERE provides comprehensive global address data with standardised formats across 240+ countries and territories.
+- [Kadaster](/docs/data/kadaster.md): Essential Elements
+- [Kartverket](/docs/data/kartverket.md): Essential Elements
+- [MoIS](/docs/data/mois.md): Essential Elements
+- [Multiple Residence](/docs/data/mr.md): For more information on the Multiple Residence dataset, please refer to our comprehensive guide on this topic: Read More.
+- [Not Yet Built](/docs/data/nyb.md): The Not Yet Built address format is identical to the Postcode Address File format.
+- [Standard UK Address](/docs/data/paf.md): Our APIs return all data contained in Royal Mail's Postcode Address File.
+- [UK Alias Addresses](/docs/data/paf-aliases.md): The Alias address format is identical to the Postcode Address File format.
+- [Supported Territories](/docs/data/paf-supported-territories.md): The PAF dataset covers the UK only. This includes:
+- [Postcode Areas](/docs/data/postcode-areas.md): What is a Postcode Area?
+- [UK Postcode Lists](/docs/data/postcode-list.md): Listed below are links to CSV downloads of UK Postcodes and partial postcodes in CSV format.
+- [Reverse Geocoding](/docs/data/reverse-geocoding.md): You can search for nearest addresses using a geolocation (longitude and latitude).
+- [SDFI](/docs/data/sdfi.md): General Information
+- [Search by UDPRN](/docs/data/search-by-udprn.md): UDPRNs are an eight digit unique numeric code (e.g. 25962203) for any premise on the Postcode Address File.
+- [Search Republic of Ireland Addresses (Eircode)](/docs/data/search-eircode.md): To search for Irish addresses please contact us to have Eircode enabled on your account.
+- [Supported Countries](/docs/data/supported-countries.md): - Afghanistan
+- [Thoroughfare Descriptors](/docs/data/thoroughfare.md): Thoroughfare descriptors are common words that suffix a thoroughfare like Road, Close and Court.
+- [UPUJP](/docs/data/upujp.md): Core Address Fields
+- [United States Postal Service Address](/docs/data/usps.md): Essential Elements
+- [Welsh Address](/docs/data/welsh-paf.md): The Welsh Postcode Address File format is identical to the Postcode Address File format except locality information such as post town locality dependent are presented in Welsh.
+
+### Guides
+
+Learn more about address verification, integrating our products and account management.
+
+- [Guides](/docs/guides.md): Learn more about address verification, integrating our products and account management.
+- [Allowed URLs](/docs/guides/allowed-urls.md): Each Key can be restricted against a number of URLs. Individual Licensee Keys can also have allowed URLs assigned to them.
+- [API Key](/docs/guides/api-key.md): What is an API Key?
+- [API Key Security](/docs/guides/api-key-secure.md): In order to mitigate the risk of misuse, usage of your API Key can be controlled in the following ways:
+- [API Key Settings](/docs/guides/api-key-settings.md): You can limit your API Key usage via the Security panel on your dashboard. This is important when you want to control how many lookups you spend per day.
+- [Automated Top-Ups](/docs/guides/automated-topups.md): Automated top-ups ensure uninterrupted access to our address validation service. Follow our guide and set up automated top-ups today. Contact us for support.
+- [How to Use ClickCleanse](/docs/guides/browser-cleanse.md): Learn how to use the Browser Address Cleanse tool to validate and standardise your customer addresses
+- [ChatGPT for Docs](/docs/guides/chatgpt-for-docs.md): We are in the very early stages of using a LLM to improve the developer experience around our tools and APIs. Please use ChatGPT for Docs and rate the answers to your questions so we can improve the agent and our documentation.
+- [Email Validation Guide](/docs/guides/email-validation.md): Check if an email address is deliverable using our Email Validation service.
+- [Integrating with LLM Assistance](/docs/guides/llms.md): Use LLMs in your Ideal Postcodes integration workflow.
+- [Phone Validation Guide](/docs/guides/phone-validation.md): Check if a phone number is valid by using our Phone Validation service.
+- [Places API](/docs/guides/places.md): Query for geographical places across countries. Each query will return a list of place suggestions, which consists of a place name, descriptive name and id.
+- [Purchasing Lookups](/docs/guides/purchasing-lookups.md): A lookup balance is our form of credit which permits one valid address search.
+- [Status API](/docs/guides/status-api.md): Endpoint
+- [Sublicensing](/docs/guides/sublicensing.md): Sublicensing Keys allow you to license multiple organisations or individuals under the same key. All managed, controlled and billed to you under the same account.
+- [Tagging and Usage Tracking](/docs/guides/tag-and-track.md): Any request which affects your Key balance may be decorated with metadata called tags. This data is stored along with your lookup history and can be queried via the API. We call the ability to label your requests "tagging".
+- [Tagging](/docs/guides/tags.md)
+
+### Integrations
+
+Quickly add address validation to eCommerce platforms, CRMs, form builders and more with one of our native extensions or integration guides.
+
+- [Integrations](/docs/integrations.md): Quickly add address validation to eCommerce platforms, CRMs, form builders and more with one of our native extensions or integration guides.
+- [BigCommerce Address Validation Documentation](/docs/integrations/bigcommerce.md): Integrate address finder or postcode lookup to your Bigcommerce address forms. Follow our setup guide to get started. Quick and easy implementation. Live developer support available.
+- [Browser Extension Integration](/docs/integrations/browser-extension.md): Integrate Address Validation to Chrome and Firefox Browsers.
+- [Calculated Fields Form Integration](/docs/integrations/calculated-field-forms.md): Integrate Address Validation to your Calculated Field Forms Pages. Postcode Lookup or Address Finder. Quick installation using CFFs's form editor. Live support.
+- [Contact Form 7 Address Validation](/docs/integrations/contact-form-7.md): Integrate Address Validation to Your WordPress Contact Form 7 Pages. Postcode Lookup or Address Finder. Quick installation using CF7s's form editor. Live support.
+- [Divi Address Validation](/docs/integrations/divi.md): Integrate Address Validation with the WordPress Divi Page Builder.
+- [Microsoft Dynamics 365 Integration| Documentation](/docs/integrations/dynamics-365.md): Enable address validation to Microsoft Dynamics 365 with our Chrome and Firefox Browser Extension. Adds UK Address Finder to contact creation and editing.
+- [Elementor](/docs/integrations/elementor.md): Add address autocomplete and postcode lookup to your Wordpress Elementor pages. Follow the address finder guide to get started. Live developer support.
+- [Fluent Forms](/docs/integrations/fluent-forms.md): Add address autocomplete and postcode lookup to your Wordpress Fluent Forms pages. Follow the address finder guide to get started. Live developer support.
+- [FormAssembly Address Validation](/docs/integrations/formassembly.md): Integrate Address Validation to Your FormAssembly Pages. Follow our setup guide to get started. Quick and easy implementation. Live developer support available.
+- [Formidable Forms Address Validation Integration](/docs/integrations/formidable.md): Integrate Address Validation to Your WordPress Formidable Forms. Follow our setup guide to get started. Quick and easy. Live developer support available.
+- [Forminator](/docs/integrations/forminator.md): Add address autocomplete and postcode lookup to your Wordpress Forminator pages. Follow the address finder guide to get started. Live developer support.
+- [Formstack Integration](/docs/integrations/formstack.md): Add address validation to your Formstack Form builder with Ideal Postcodes address finder integration. Simply insert javascript into the form builder.
+- [Gravity Forms Address Validation Integration](/docs/integrations/gravity-forms.md): Attach Address Finder or Postcode Lookup to WordPress Gravity Forms using custom HTML fields.
+- [Gutenberg Forms Address Validation Integration](/docs/integrations/gutenberg.md): Integrate Address Validation and Postcode Lookup to Your WordPress Gutenberg Forms Pages. Add address input fields easily though the HTML editor.
+- [Hubspot Address Validation Integration | Documentation](/docs/integrations/hubspot.md): Add address finder to your HubSpot CRM with our Browser Extension. Quick and easy setup through Chrome or Firefox. Live technical support.
+- [Hubspot Pages](/docs/integrations/hubspot-pages.md): Integrate Address Validation with the Hubspot Page Builder.
+- [JetFormbuilder Address Validation](/docs/integrations/jetformbuilder.md): Integrate Address Finder and Postcode Lookup to your JetFormbuilder pages easily using the form editor. Follow the guide for a quick setup.
+- [Jotform Integration](/docs/integrations/jotform.md): This guide outlines how to attach Address Finder on your Jotform address form. Follow our setup guide to get started. Live developer support available.
+- [Magento Address Validation Integration](/docs/integrations/magento.md): Magento extension for UK address search and validation. Follow our setup guide to get started. Quick and easy implementation. Live developer support available.
+- [Ninja Forms Address Validation](/docs/integrations/ninja-forms.md): Add Address Validation and Postcode lookup to your Ninja Forms pages Using WordPress' form editor. Follow the guide for a quick setup. Live developer support.
+- [Odoo Integration](/docs/integrations/odoo.md): Integrate Address Validation to Your Odoo Application
+- [OpenCart Address Validation Integration](/docs/integrations/opencart.md): Add Address Validation and Postcode lookup to your Opencart address forms. Follow our simple setup guide to get started. Live developer support available.
+- [Installing Address Validation for PageFly](/docs/integrations/pagefly.md): Integrate Address Finder and Postcode Lookup to your PageFly Address Forms. Follow our simple guide to get started.
+- [Quickbooks](/docs/integrations/quickbooks.md): Integrate Address Validation on Quickbooks with our Browser Extension. Quick and easy setup through Chrome or Firefox. Live technical support.
+- [Really Simple Systems](/docs/integrations/really-simple-systems.md): Integrate Address Validation on your Really Simple Systems CRM with our Browser Extension. Quick and easy setup through Chrome or Firefox. Live technical support.
+- [Sage Business Cloud Accounting Integration](/docs/integrations/sage.md): Integrate Address Validation to Your Sage Application with our Browser Extension. Adds Address Finder to new customer and supplier record creation fields.
+- [Salesforce Integration](/docs/integrations/salesforce.md): Integrate address validation to your Salesforce CRM with our Browser Extension. Quick and easy setup through Chrome or Firefox. Live technical support.
+- [ShopWired Address Validation | Documentation](/docs/integrations/shopwired.md): Shopwired Integration for UK Address Search and Validation. Address Finder and Postcode lookup on checkout and admin pages. Follow our guide to get started.
+- [Unbounce Address Validation](/docs/integrations/unbounce.md): Integrate Address Validation to Your Unbounce Form. Works by inserting scripts and stylesheets into the Unbounce Builder page. Quick and easy setup.
+- [Webflow Integration](/docs/integrations/webflow.md): The guide outlines how to attach Address Finder and Postcode Lookup to your Webflow Form Block.
+- [Wix Integration](/docs/integrations/wix.md): Integrate Address Validation with the Wix Editor.
+- [Installing Address Validation for WooCommerce](/docs/integrations/woocommerce.md): Integrate Address Finder and Postcode Lookup to your Wordpress Woocommerce Address Forms. Follow our simple guide to get started.
+- [Zapier Address Validation Documentation](/docs/integrations/zapier.md): Improve customer data management with Ideal Postcodes & Zapier. Automate email, address, and phone verification workflows in your software seamlessly
+- [Zoho CRM](/docs/integrations/zoho-crm.md): Add Address Finder to Zoho CRM address forms with our Browser Extension. Quick and easy setup through Chrome or Firefox. Live technical support.
+
+### Libraries
+
+- [Browser Client API](/docs/libraries/browser-client.md)
+- [Node.js API Client](/docs/libraries/node-js.md)
+- [Open API Specification](/docs/libraries/open-api.md): OpenAPI
+
+### Migration
+
+- [Migrating from GetAddress.io](/docs/migrate/getaddressio.md): Comprehensive migration guide from GetAddress.io to Ideal Postcodes
+- [Autocomplete Migration](/docs/migrate/getaddressio/autocomplete.md): Migrate from GetAddress.io Autocomplete API to Ideal Postcodes Address Finder API
+- [Browser Extension Migration Guide](/docs/migrate/getaddressio/browser-extension.md): Complete guide to migrating from the GetAddress.io Chrome extension to Ideal Postcodes browser extensions for Chrome and Firefox
+- [Address Field Mapping Reference](/docs/migrate/getaddressio/field-mapping.md): Complete field mapping reference for migrating GetAddress.io address data to Ideal Postcodes
+- [Gravity Forms Migration](/docs/migrate/getaddressio/gravity-forms.md): Complete migration guide for transitioning your WordPress Gravity Forms address validation from GetAddress.io to Ideal Postcodes following the High Court ruling.
+- [Jotform Integration Migration](/docs/migrate/getaddressio/jotform.md): Migrate your Jotform address validation from GetAddress.io to Ideal Postcodes.
+- [Autocomplete JS Library Migration](/docs/migrate/getaddressio/js-autocomplete.md): Migrate from GetAddress.io Autocomplete JS library to Ideal Postcodes Address Finder JavaScript library
+- [Find JS Library Migration](/docs/migrate/getaddressio/js-find.md): Migrate from GetAddress.io Find JavaScript library to Ideal Postcodes Postcode Lookup JavaScript library
+- [Jotform Migration](/docs/migrate/getaddressio/platform-jotform.md): Complete migration guide for transitioning your Jotform address validation from GetAddress.io to Ideal Postcodes. Includes side-by-side code comparison and step-by-step instructions.
+- [Postcode Lookup Migration](/docs/migrate/getaddressio/postcode-lookup.md): Migrate from GetAddress.io Find API to Ideal Postcodes Postcodes API
+- [WooCommerce Migration](/docs/migrate/getaddressio/woocommerce.md): Migrate from GetAddress.io WooCommerce plugin to Ideal Postcodes WooCommerce plugin
+
+### Postcode Lookup
+
+Add Postcode Lookup to your forms with our Postcode Lookup JavaScript package. Simple and quick set up. Guides and live technical support available.
+
+- [Postcode Lookup](/docs/postcode-lookup.md): Add Postcode Lookup to your forms with our Postcode Lookup JavaScript package. Simple and quick set up. Guides and live technical support available.
+- [Add Custom Elements](/docs/postcode-lookup/add-custom-elements.md): You may have a specific postcode lookup user interface in mind and don't wish to rely on just specifying a context to generate Postcode Lookup elements and CSS to style those elements.
+- [Additional Configuration](/docs/postcode-lookup/additional-configuration.md): Postcode Search Only
+- [Retrieve Additional Data](/docs/postcode-lookup/additional-data.md): We can also pull in more data from the Postcode Address File by passing more arguments into the outputFields object.
+- [Behaviour](/docs/postcode-lookup/behaviours.md): This guide outlines technical details about how Address Finder behaves and interacts with the DOM.
+- [Callbacks](/docs/postcode-lookup/callbacks.md): Postcode Lookup also provides callbacks which let you hook into specific events.
+- [Configure](/docs/postcode-lookup/configure.md): Postcode Lookup a  method to apply address verification to a form.  requires the following configuration at minimum.
+- [CSS Classes](/docs/postcode-lookup/css-classes.md): Postcode Lookup does not inject any styling into your page. Instead it relies on your pre-existing styles for your forms to render the Postcode Lookup UI.
+- [Custom Search Button](/docs/postcode-lookup/custom-button.md): You may also specify any clickable DOM element as a trigger to lookup a postcode.
+- [Run Custom Callback](/docs/postcode-lookup/custom-callback.md): By passing a function to a callback like , you can modify or extend the behaviour of Postcode Lookup.
+- [Custom Elements](/docs/postcode-lookup/custom-elements.md): While Postcode Lookup can reduce much of the friction by rendering postcode lookup elements inside the provided , this is less ideal for forms with complex designs and styling rules. In these instances, you may create one or more custom postcode lookup elements and provide them to Postcode Lookup.
+- [Custom Postcode Input](/docs/postcode-lookup/custom-input.md): You may not want the plugin to create its own postcode input field. Instead, you may wish to use an existing field.
+- [Enable Full Address Search](/docs/postcode-lookup/full-search.md): You can also enable a full address search, i.e. combine a postcode with house number.
+- [Hide Address Fields](/docs/postcode-lookup/hide-fields.md): Instead of writing address attributes to specific input fields, you can also write out the entire address to a general input like a textarea.
+- [How it Works](/docs/postcode-lookup/how-it-works.md): Postcode Lookup can be attached to any form with pre-existing address inputs and an empty container to render the Postcode Lookup UI.
+- [Messages](/docs/postcode-lookup/messages.md): Postcode Lookup uses a small default set of messages to communicate specific events to the user.  All of Postcode Lookup's default messages can be overridden. They are outlined below:
+- [Multi-page Form](/docs/postcode-lookup/multi-page-form.md): You can have the user enter their postcode and open the address form  in a new page by saving the user's input in localStorage.
+- [Create Multiple Instances](/docs/postcode-lookup/multiple.md): You can create multiple, independent Postcode Lookup fields on the same page. This is useful for certain requirements, e.g. separate billing and shipping addresses.
+- [Package Manager (npm)](/docs/postcode-lookup/npm.md): Postcode Lookup is also available without transpilation or minification on npm as @ideal-postcodes/postcode-lookup.
+- [Add to React](/docs/postcode-lookup/react.md): 1. Create a context container and attach a reference with createRef
+- [Omit Company Name](/docs/postcode-lookup/remove-organisation.md): In many countries including the UK, the organisation name will take presidence as the first line of an address if it is present.
+- [Drop-In Script](/docs/postcode-lookup/script.md): Postcode Lookup shipped in a polyfilled, typed and minified package called postcode-lookup-bundled.
+- [Merge Address into One Field](/docs/postcode-lookup/single-field.md): Instead of writing address attributes to specific input fields, you can also write out the entire address to a general input like a textarea.
+- [Style Adjustments](/docs/postcode-lookup/style-tweaks.md): It's possible that the default styling may require a small tweak to allow it to better match your design and site aesthetic. Rather than adding CSS assets, consider applying a style attribute as a setup configuration option. The configurations below apply a style attributely directly to a specific element of the address finder.
+
+## Optional
+- [OpenAPI Specification (JSON)](https://openapi.ideal-postcodes.co.uk/openapi.json): Machine-readable API specification in JSON format
+- [OpenAPI Specification (YAML)](https://openapi.ideal-postcodes.co.uk/openapi.yaml): Machine-readable API specification in YAML format
+

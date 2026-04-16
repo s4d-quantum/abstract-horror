@@ -1,0 +1,57 @@
+<?php $global_url="../../"; ?>
+
+<div class="box sales_orders">
+        <div class="box-header">
+            <h3 class="box-title pull-left">Priority Goods In</h3>
+            <span class="pull-right">Total: <b class="total_pending_items_count"></b></span>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+        <!-- datatable begins-->
+            <div class="custom_datatable">
+                <div class="table-wrapper" style="padding:5px;">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>O.ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div class="data-loading">
+                    <div class="spinner">
+                      <div class="bounce1"></div>
+                      <div class="bounce2"></div>
+                      <div class="bounce3"></div>
+                    </div>
+                    Processing
+                  </div>
+                <div class="clearfix">
+                    <div class="pagination-wrapper">
+                    <div class="prev-next-btn" data-value="previous"><a href="#" class="page-link">Previous</a></div>
+                    <div class="current-page-btn"><b>Page: <span class="current-page">1</span> of <span class="total-pages"></span></b></div>
+                    <div class="prev-next-btn" data-value="next"><a href="#" class="page-link">Next</a></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div class="brand-list hide">
+                <?php 
+                // $get_category = mysqli_query($conn,"select title, category_id from tbl_categories")
+                // or die('Error: '.mysqli_error($conn)); 
+                // while($brands = mysqli_fetch_assoc($get_category)){
+                // echo '<span>'.$brands['title']."-".$brands['category_id']."</span>";
+                // }
+                ?>
+            </div>
+            <!-- /datatable ended-->
+
+            </div>
+            <!-- /.box-body -->
+        </div>
+        <!-- /.box -->
+

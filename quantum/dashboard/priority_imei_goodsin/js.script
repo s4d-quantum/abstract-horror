@@ -1,0 +1,89 @@
+let offset = 0;
+const limit = 10;
+let total = 0;
+
+const prevBtn = document.querySelector('.prev-next-btn[data-value="previous"]');
+const nextBtn = document.querySelector('.prev-next-btn[data-value="next"]');
+const currentPageSpan = document.querySelector('.current-page');
+const totalPagesSpan = document.querySelector('.total-pages');
+const tableBody = document.querySelector('.table tbody');
+
+function fetchPriorityData() {
+  document.querySelector('.data-loading').style.display = 'block';
+
+  fetch(`dashboard/priority_imei_goodsin/fetch_priority_data.php?limit=${limit}&offset=${offset}`)
+    .then(response => response.json())
+    .then(response => {
+      total = response.total;
+      renderTable(response.data);
+      updatePaginationButtons();
+      document.querySelector('.data-loading').style.display = 'none';
+    })
+    .catch(error => {
+      console.error('Error fetching priority data:', error);
+      document.querySelector('.data-loading').style.display = 'none';
+    });
+}
+
+function renderTable(data) {
+  tableBody.innerHTML = '';
+
+  if (data.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="6">No data found.</td></tr>';
+    return;
+  }
+
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.id}</td>
+      <td>${row.date}</td>
+      <td>${row.supplier_name}</td>
+      <td>${row.qc || ''}</td>
+      <td>${row.priority || ''}</td>
+      <td>${row.qty || ''}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+function updatePaginationButtons() {
+  const currentPage = Math.floor(offset / limit) + 1;
+  const totalPages = Math.ceil(total / limit);
+
+  currentPageSpan.textContent = currentPage;
+  totalPagesSpan.textContent = totalPages;
+
+  // Enable/disable buttons
+  if (currentPage <= 1) {
+    prevBtn.classList.add('disabled');
+  } else {
+    prevBtn.classList.remove('disabled');
+  }
+
+  if (currentPage >= totalPages) {
+    nextBtn.classList.add('disabled');
+  } else {
+    nextBtn.classList.remove('disabled');
+  }
+}
+
+// Event listeners
+prevBtn.addEventListener('click', e => {
+  e.preventDefault();
+  if (offset >= limit) {
+    offset -= limit;
+    fetchPriorityData();
+  }
+});
+
+nextBtn.addEventListener('click', e => {
+  e.preventDefault();
+  if (offset + limit < total) {
+    offset += limit;
+    fetchPriorityData();
+  }
+});
+
+// Initial fetch
+fetchPriorityData();

@@ -1,0 +1,22 @@
+/*
+IP IMEI purchase
+IPR IMEI purchase
+return
+IO IMEI order
+IOR IMEI order
+return
+
+SP Serial purchase
+SPR Serial purchase
+return
+SO Serial order
+SOR Serial order
+return
+
+AP Accssories purchase
+APR Accessories purchse
+return
+AO Accessories order
+AOR Accessories order
+return
+*/

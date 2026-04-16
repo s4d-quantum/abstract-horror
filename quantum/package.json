@@ -1,0 +1,30 @@
+{
+  "name": "s4dlimiteduk",
+  "version": "1.0.0",
+  "description": "S4D Inventory and accounts management application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AhmedGMurtaza/s4dlimiteduk.git"
+  },
+  "author": "Ahmed Murtaza <ahmed.gmurtaza@hotmail.com> (http://github.com/ahmedgmurtaza)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AhmedGMurtaza/s4dlimiteduk/issues"
+  },
+  "homepage": "https://github.com/AhmedGMurtaza/s4dlimiteduk#readme",
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "lodash": "4.17.11",
+    "repomix": "^0.2.20",
+    "uglify-js": "3.4.9"
+  },
+  "devDependencies": {
+    "expose-loader": "^0.7.5",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  }
+}

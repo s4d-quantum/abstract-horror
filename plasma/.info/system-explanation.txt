@@ -1,0 +1,226 @@
+This document serves to illustrate the way in which we need our system to work, it will be divided into sections for each module and likely split between a human style explanation and a second part with technical info such as DB info etc, the goal being to create a comprehensive, capable, reliable inventory system
+
+Basic structure:
+
+Dashboard/landing page - basic metrics and info on stock and orders etc
+Inventory - main inventory management table with searches and filters etc
+Goods in - handling of purchase orders and adding stock to the system and locations
+Goods Out - handles sales orders, processing of orders, shipping and booking stock out
+QC - quality control management, recording of test results etc
+Repair - repair job management, parts management, level 3 repair management
+Admin ops - handles specific operations like stock movement, locked behind a pin code
+Customers - table of customer information and customer management 
+Suppliers - table of supplier info and supplier management
+
+Detailed info:
+
+Dashboard:
+
+This is the systems landing page, it has navigation options (as will every page of course) and its main content is various widgets and tables displaying information including:
+
+Total count of devices in stock currently
+Count of total unprocessed sales orders to process
+A count showing how many devices were booked in via goods in and how many booked out in goods out in the past 7 days
+A count of returned devices in the last 7 days
+Count of in stock devices awaiting QC and awaiting repair
+A table displaying the 10 most recent goods in/purchase orders
+A table displaying the latest 10 unprocessed sales orders
+
+
+Inventory:
+
+This page displays a table of information on devices both currently in stock and historically with one line per device, the table must display information on the following:
+
+Purchase ID, IMEI, Manufacturer, Model, Supplier, Location, Color, OEM Color, Storage, Grade,    Status
+
+The page also requires search possibility for at least model (if possible both model no and model name should work here) and imei and text input filterable dropdown filter options for:
+
+Status, Manufacturer, supplier, color, oem color, grade, location. Plus a “Date From” and “Date to” filter
+
+Results in the table should be paginated as we can be dealing with hundreds or even thousands of results 
+
+
+
+Goods In:
+
+This section handles purchases made by the company and goods in processes that add new units to stock. This is a two stage process. The main page should display a paginated table of purchase orders with a search box to locate specific orders. The table should display info on: Purchase Id, Purchase Date, Supplier and Quantity then a button to view/edit the purchase order. There will also be a button on the page that allows the user to create a new purchase order
+
+As was mentioned earlier this is a two step process, when the purchase is made the sales staff will create the Purchase Order, this is like a pre alert of the expected incoming stock as such details will be only generic information, not anything that identifies a specific unit, this comes later
+
+Sales staff select a supplier, a manufacturer, a model, a storage size, a color and the quantity of units expected, they can then if needed add another line to the purchase order for another model or configuration resulting in a sort of list of what is expected eg:
+
+Supplier: Raylo     Supplier Ref: 63678946
+
+Samsung Galaxy S22 5G - Phantom Black 256Gb  Qty: 10
+Samsung Galaxy S22 Ultra 5G - Phantom Silver 512Gb Qty: 5
+
+Total: 15 Units
+
+Once all expected units are added the purchase order can be finalized 
+
+When the shipment arrives we move to the second stage, the warehouse staff will open the specific purchase order that is expected, here we will have an interface where we can scan an IMEI no of a device, the system then performs a TAC lookup using the 1st 8 digits of the imei no to return the manufacturer and model info of the device to ensure it is correct, it will also fetch valid possibilities for storage configurations and colors for the warehouse staff to select as these cannot be fully determined by tac (though we could simply have these as tick boxes to confirm it is correct it is probably better to keep the flexibility of being able to accept a unit if for example the incorrect color was sent)
+
+If a device is scanned and does not match any of the expected units the system throws an error
+
+Once all expected devices are scanned in and verified the goods in can be finalized which commits the values to the db to add the units to stock
+
+
+Goods Out:
+
+This section is more involved than others, partly due to integrations with external services and a separation between B2B and B2C (aka Backmarket or BM) orders.
+
+As such we have 2 sub options in the navigation for goods out, one for “Sales Orders” and one for “Backmarket” each of these has a little notification dot next to them with the number of unprocessed orders if there are any 
+
+These pages work from the same source of information and tables, the Backmarket option opens a page with a table of orders for Backmarket consumer orders only while the Sales Orders page by default displays sales orders for other customers however we have a button that allows showing of backmarket orders too
+
+
+Sales Orders:
+
+The Sales Order page should display a table of sales orders with info on: Sales order ID, Date, Customer, Creator (user who created the sales order) and an “Actions” column, for unprocessed orders there will be 2 buttons, View and Goods-Out. Orders that have been closed will have three buttons, one for View, one for Export and one for Track
+
+Above the table at the top right we have a button for “New Sales Order” these much like purchase orders are a somewhat flexible selection of devices chosen by sales staff to fill a customer order.
+
+
+New Sales Order:
+
+When opening a new sales order the user will first have to select a supplier, then a manufacturer from the list in the next dropdown, this only shows manufacturers in stock, once these are chosen we have a paginated table of devices below, while we are selecting actual devices from stock here the warehouse require some flexibility, as such we group devices together by properties rather than list individual devices, this table should be searchable by at least model and have filters for storage and color
+
+The table should display info on the manufacturer, model, color, oem color, storage, grade, location/tray, quantity available (user selects the amount they want in this box) and a button to add the device(s) to the order which should be displayed in a table below with similar info to above but with a button to remove devices if needed. 
+
+Since sales orders are not always completed in a single instance we then need 2 options one to save the order and exit then One to complete the order which allows it to have the Goods Out option
+
+Backmarket:
+
+This works very similarly to the Sales orders page the only real differences are slightly differently presented info. Any BM order will have its customer value in the system set to the generic “Backmarket Consumer” on this page we only display sales orders that are for this customer
+
+The other difference is in the info displayed in the table of orders, here we have columns for: Date, Sales Order ID, BM Order ID, Customer Ref (on BM orders this will be the customers name)
+
+Other functionality on this page is the same as it is on the Sales Orders page
+
+Actions column buttons:
+
+View:
+
+This page simply displays a mock version of the dispatch note listing items in the order, customer info, company info etc
+
+Goods-Out
+
+Here is where things can get a little complicated, the page initially displays some basic info about the order, the date, the customer, sales order id, customer ref and for BM orders the BM order ID.
+
+Then some boxes for values staff may need to enter: No of pallets, No of boxes, Courier, Tracking No
+
+Displayed below this should be a table of expected devices the table should have columns for: Manufacturer, Model, storage, color, grade, supplier, location/tray
+
+Staff are free to select any available devices that match the criteria in the table above so if there are 5 Samsung Galaxy S23 in Phantom Black 256Gb grade A they may choose any of the 5 devices however if any of these properties do not match the system will throw an error
+
+Below the table with the expected devices we should have the scanning interface, this is a text input box that the warehouse staff will scan the IMEI no into when filling the order, the manufacturer, model and supplier are checked by the system, color and storage are manually verified by staff as these values cant be pulled from a TAC lookup
+
+Finally we will have buttons below the table of scanned devices, one to save the order, this allows orders to be partially completed and put on hold should we be missing a unit etc (some orders are filled over a few days as stock arrives) next there should be a button for “Complete” which submits the required values to the db for the goods out and displays the printable dispatch note
+
+For Backmarket orders we have one other button that is displayed, “Book Shipment” pressing this button triggers a somewhat complex set of scripts which do the following:
+
+
+Take the BM order ID no from the sales order and use it to make an api call to backmarket to get the customer shipping information etc, this data is stored in a temporary db table
+Take the address stored from the BM api response and clean it via Ideal-Postcodes API, store the cleaned address in the temp table
+Take the customers name and cleaned address and make a call to the DPD api to book a shipment for the order
+Downloads the label in .zpl format and sends it to a webhook for auto printing
+
+After this we are redirected to the same dispatch note page displayed in the standard goods out process only with button that says “Update BM” this button will:
+
+
+take the stored tracking no, courier (DPD UK for BM orders) and the IMEI no of the devices(s) that were sent from the db 
+use them to make an API call to backmarket again to update their systems with the tracking no, imei courier  (this is also a multi step process as we must validate order lines etc before we can change the whole orders state)
+Use the dispatch note url stored in the temp db to download the BM pdf dispatch note and send it to the laser print webhook
+
+Export:
+
+This button simply outputs an excel document containing the information on the items in the order
+
+Track:
+
+Another slightly complex page as it has to check the courier used and the tracking no from our db to make an api call to the correct API for the courier and return the tracking events that are displayed on the page.
+
+Couriers include: DPD, UPS, DHL, FedEx each has their own style of api so must be approached carefully
+
+QC: 
+
+This page has a table of info on QC jobs grouped by purchase id. The table should have columns for: date, purchase_id, supplier, location, quantity, status
+
+Clicking the purchase id no should redirect us to the qc job page which has a table of info on the devices in the order and some fields to set properties. The table should have the following columns: imei no, manufacturer, model, storage, color (from db but editable), grade (dropdown to select grade from A to F), Cosmetic (tick boxes: Pass, Fail), Functional (tick boxes: Pass, Fail), Comments (text entry box) at the bottom of the table should be a check box for “QC Complete” which updates the status and a button to Save and exit the job page
+
+Repair: 
+
+Here we have 2 sections Repairs and Level 3 
+
+Repairs:
+
+This page has a table of repair jobs which are identified by using the purchase id. The table displays info on the date, purchase id no, supplier, quantity (how many units are in the purchase order) and a button to view the job 
+
+
+Job page:
+In the job page we have a table of info on the devices in the order with columns for IMEI no, manufacturer, model, color, storage, grade, parts (lists parts added to the device), comments. Clicking the imei no of the device should open the device repair details page
+
+Repair Detail page:
+This page should first display some basic info about the unit, make/model, color, storage, grade, supplier. There should be a text entry box for engineer comments.
+
+Below this should be a table of compatible parts for the device with columns for: Part name, color, quantity (no in stock/available) and a button to add the part
+
+Below this should be a table of info on parts already added to the device with columns for part name, color and a button to remove the part if needed. Finally there should be check box for “repair complete?” and a button to save and return to the job page. When all units in a purchase id are marked complete the order should automatically be marked complete as well
+
+
+Level 3 Repair:
+
+This section contains a table of jobs escalated to board level repair. The page contains a table of info on jobs for L3 repair with columns for: Date, location (eg level3_1), Imei, Manufacturer, Model, Fault, Status.
+
+At the top we have a button for “book in repair” this page has a dropdown menu to select from available level 3 locations, a text input box for the imei no of the device and another text input box for the fault, finally a button to book the repair in.
+
+Back on the main table:
+Clicking the imei no should open the Level3 details page which will display info on:
+
+Date, location (eg level3_1), Imei, Manufacturer, Model, Fault
+
+A text input box for engineer comments and a dropdown menu to select a new status eg complete/BER/on hold/awaiting parts. And finally a button to save and exit, if the status is set to complete the location is changed to level3_complete, if it is set to BER/unrepairable location is changed to level3_fails
+
+Admin Ops: 
+
+This page contains access to protected functions that require a pin or a pin and a reason to unlock them either because they are potentially dangerous or can incur cost. The main page has buttons to access these and a table listing the last 10 uses including the date, user who performed the op and the reason. Opening this page gives a more detailed view of what happened. Currently there are two such features
+
+Location management:
+
+This section requires both a pin and a reason to access. It is used for bulk movement of stock, we have a dropdown box to select the location you are moving the stock into and a text input box that takes scanned or pasted IMEI nos, one per line and bulk moves them all to a new location easily
+
+Color Check:
+
+This page is much more complicated as it also uses external services, 
+
+The page appears simple, just a text input box that takes scanned or pasted imei nos (1 per line) it also supports uploading a .csv or .xslx file
+
+We also have a button for “Inventory search” this opens a modal with a searchable/filterable inventory table much like the main inventory page, users can tick units from the  modal to add them to the check
+
+Finally a button for “Lookup Info” as we initially incurred a lot of unnecessary costs for repeated paid checks the system first checks our local api to see if we have the value cached from a previous attempt, if the value is not in the local storage it makes another api call to IMEI24 to run a paid check, these values are stored back in our local api and db and a table of information on the units is displayed below
+
+Customers:
+
+This page is a fairly simple one, it just displays a paginated table of info on customers with columns for: Name, Address, Contact No, email and an actions column with buttons for edit or delete.
+
+We also have a button for “New Customer” which opens a modal that allows us to enter details of a new customer to be added
+
+Suppliers:
+
+This page is extremely similar to the customers page only it has a table of info on suppliers with columns for: Name, Address, Contact No, email, VAT no and an actions column with buttons for edit or delete.
+
+
+Important Rules: 
+
+At no time may the same IMEI no be duplicated in stock, imei no are unique so no 2 devices should have the same however it is worth noting it is not impossible for a device to pass through our company more than once (eg bought by us, sold by us, later bought back by us)
+
+Things we may need to add/integrate:
+
+We are now automatically ingesting the logs from Blackbelt, our QC application into a new DB, we can use this both as a way of confirming a functional pass but also as a source of reliable device info.
+
+We also have an enhanced TAC lookup db, normally a TAC code can only be used to identify manufacturer and model reliably however ours also supplies potential storage configs and color possibilities based on what devices were available with at manufacture (EG a device may have only been sold in 128Gb and 256Gb and in only black or silver) 
+
+We will want to add granular logging to the system for traceability but ideally to a separate db or an ELK stack as the volume of data can result in bloat. We ideally need to log all operations that make changes to anything so should anything go wrong we can trace back to discover what happened and when exactly
+
+We will need to plan and develop a new system for handling parts management, this will involve defining which parts are compatible with which devices, how we store stock info/inventory etc
+

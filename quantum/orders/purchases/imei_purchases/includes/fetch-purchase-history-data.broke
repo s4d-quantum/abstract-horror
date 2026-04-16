@@ -1,0 +1,110 @@
+<?php include '../../../db_config.php';  ?>
+<?php
+
+// Example limit and offset - replace with real values or user input validation
+$limit = 10; // Updated to use your existing page size
+$pageId = 0;
+
+// Set pageId from POST parameter if provided
+if(isset($_POST['pageId'])){
+    $pageId = ($_POST['pageId'] > 1 ) ? (($_POST['pageId'] -1) * $limit ) : 0;
+}
+
+// Get variables for filtering
+$searchInput = isset($_POST['searchInput']) && $_POST['searchInput']  != '' ?  $_POST['searchInput']:NULL;
+$supplier = isset($_POST['searchSupplier']) && $_POST['searchSupplier']  != '' ?  $_POST['searchSupplier']:NULL;
+$fromDate = isset($_POST['fromDate']) && $_POST['fromDate']  != '' ?  $_POST['fromDate']:NULL;
+$toDate = isset($_POST['toDate']) && $_POST['toDate']  != '' ?  $_POST['toDate']:NULL;
+
+// Build base query with optimized structure
+$query = "
+SELECT
+  pr.purchase_id,
+  pr.date,
+  pr.qc_required,
+  pr.priority,
+  sup.name AS supplier,
+  agg.total,
+  agg.max_return AS purchase_return,
+  pr.has_return_tag
+FROM tbl_purchases pr
+INNER JOIN tbl_suppliers sup ON sup.supplier_id = pr.supplier_id
+LEFT JOIN (
+  SELECT purchase_id, COUNT(*) AS total, MAX(purchase_return) AS max_return
+  FROM tbl_purchases
+  GROUP BY purchase_id
+) AS agg ON agg.purchase_id = pr.purchase_id";
+
+// Add filters
+// USE WHERE CLAUSE ONLY WHEN CONDITION 
+$query .= (
+    !is_null($searchInput) || 
+    !is_null($supplier) || 
+    !is_null($fromDate) || 
+    !is_null($toDate)
+) ? " WHERE pr.purchase_id > 0 ":"";
+
+// SEARCH INPUT
+$query .= !is_null($searchInput) ? " AND pr.purchase_id ='".$searchInput."' " : "";
+
+// SUPPLIER
+$query .= !is_null($supplier) ? " AND sup.supplier_id ='".$supplier."' " : "";
+
+// FROM DATE
+$query .= !is_null($fromDate) ? " AND pr.date >= '".$fromDate."' " : "";
+
+// TO DATE
+$query .= !is_null($toDate) ? " AND pr.date <='".$toDate."' " : "";
+
+// Add sorting and pagination with explicit values (not placeholders)
+$query .= " ORDER BY pr.purchase_id DESC LIMIT $limit OFFSET $pageId";
+
+// Execute the query
+$fetch_data = mysqli_query($conn, $query)
+    or die('Query Error: ' . mysqli_error($conn));
+
+// Count total rows for pagination
+$count_query = "
+SELECT 
+  COUNT(DISTINCT pr.purchase_id) AS total
+FROM tbl_purchases pr
+INNER JOIN tbl_suppliers sup ON sup.supplier_id = pr.supplier_id";
+
+// Add the same filters to count query
+if (!is_null($searchInput) || !is_null($supplier) || !is_null($fromDate) || !is_null($toDate)) {
+    $count_query .= " WHERE pr.purchase_id > 0 ";
+    
+    if (!is_null($searchInput)) {
+        $count_query .= " AND pr.purchase_id ='".$searchInput."' ";
+    }
+    
+    if (!is_null($supplier)) {
+        $count_query .= " AND sup.supplier_id ='".$supplier."' ";
+    }
+    
+    if (!is_null($fromDate)) {
+        $count_query .= " AND pr.date >= '".$fromDate."' ";
+    }
+    
+    if (!is_null($toDate)) {
+        $count_query .= " AND pr.date <='".$toDate."' ";
+    }
+}
+
+$fetch_total_rows_count = mysqli_query($conn, $count_query)
+    or die('Count Query Error: ' . mysqli_error($conn));
+$total_rows_count = mysqli_fetch_assoc($fetch_total_rows_count)['total'];
+
+// Format results
+$results_array = array();
+while ($row = mysqli_fetch_assoc($fetch_data)) {
+    $results_array[] = $row;
+}
+
+// Output JSON response
+header('Content-Type: application/json');
+echo json_encode(array(
+    'total_rows' => $total_rows_count,
+    'data' => $results_array
+));
+
