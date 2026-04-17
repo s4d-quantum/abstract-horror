@@ -130,6 +130,7 @@ Use dotted lower-case business names:
 - `sales_order.dispatch_updated`
 - `sales_order.units_confirmed_updated`
 - `sales_order.delivery_status_updated`
+- `sales_order.return_tag_cleared`
 - `sales_order.device_allocated`
 - `sales_order.device_dispatched`
 - `qc.updated`
@@ -243,6 +244,8 @@ The first implementation emits one event per moved IMEI after the legacy stock m
   - emits `sales_order.delivery_status_updated`
 - `quantum/orders/imei/update_delivery_statuses.php`
   - emits `sales_order.delivery_status_updated` for automated delivered-status updates
+- `quantum/orders/imei/includes/clear-return-tag-from-order.php`
+  - emits `sales_order.return_tag_cleared`
 - `quantum/orders/imei/new_order_return.php`
   - emits `sales.return_created`
 - `quantum/orders/imei/order_return_history.php`
@@ -264,14 +267,14 @@ The first implementation emits one event per moved IMEI after the legacy stock m
 
 ## Recommended Next Flows
 
-1. `quantum/orders/imei/includes/clear-return-tag-from-order.php`
-   - inspect whether return-tag removal is a meaningful business event for Plasma or just an internal shipping/admin flag
-
-2. `quantum/products/serial/includes/update_tray.php`
+1. `quantum/products/serial/includes/update_tray.php`
    - mirror the IMEI compatibility stock-move event on the serial side only if the serial item lifecycle is still materially used
 
-3. `quantum/purchases/serial_purchases/includes/submit_new_purchase.php`
+2. `quantum/purchases/serial_purchases/includes/submit_new_purchase.php`
    - add serial-side goods-in only if serial volume justifies keeping Plasma in sync for that inventory path
+
+3. `quantum/qc/qc-serial/save_qc.php`
+   - mirror the IMEI QC event set only if serial processing becomes operationally important in Plasma
 
 ## Why Not Direct Database Sync
 
