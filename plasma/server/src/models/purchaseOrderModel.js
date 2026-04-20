@@ -151,33 +151,17 @@ export const purchaseOrderModel = {
   // Create new purchase order
   async create(data, userId) {
     return transaction(async (connection) => {
-      // Generate PO number with lock to prevent duplicates
-      const lockName = "purchase_order_number_lock";
-      const lockTimeout = 10;
+      // Generate PO number
+      const [maxPO] = await connection.query(
+        "SELECT po_number FROM purchase_orders ORDER BY id DESC LIMIT 1"
+      );
 
-      try {
-        const [lockResult] = await connection.query(
-          `SELECT GET_LOCK(?, ?) AS lock_result`,
-          [lockName, lockTimeout]
-        );
+      let poNumber = 'PO-0001';
+      if (maxPO.length > 0 && maxPO[0].po_number) {
+        const lastNum = parseInt(maxPO[0].po_number.split('-')[1]);
+        poNumber = `PO-${String(lastNum + 1).padStart(4, '0')}`;
+      }
 
-        if (lockResult[0]?.lock_result !== 1) {
-          try { await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {}); } catch (_) {}
-          throw new Error("PO_NUMBER_LOCK_TIMEOUT");
-        }
-
-        const [maxPO] = await connection.query(
-          "SELECT po_number FROM purchase_orders ORDER BY id DESC LIMIT 1"
-        );
-
-        let poNumber = "PO-0001";
-        if (maxPO.length > 0 && maxPO[0].po_number) {
-          const lastNum = parseInt(maxPO[0].po_number.split("-")[1]);
-          poNumber = `PO-${String(lastNum + 1).padStart(4, "0")}`;
-        }
-
-        // Release lock early since we have our number
-        await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {});
       // Insert PO header
       const [result] = await connection.query(`
         INSERT INTO purchase_orders (
@@ -212,35 +196,29 @@ export const purchaseOrderModel = {
             line.color || null,
             line.expected_quantity || 1
           ]);
+        }
+
+        // Update expected quantity
+        const totalExpected = data.lines.reduce((sum, line) => sum + (line.expected_quantity || 1), 0);
+        await connection.query(
+          'UPDATE purchase_orders SET expected_quantity = ? WHERE id = ?',
+          [totalExpected, poId]
+        );
+      }
+
+      return { id: poId, po_number: poNumber };
+    });
+  },
+
+  // Update purchase order
   async update(id, data) {
     const updates = [];
     const params = [];
 
     if (data.supplier_ref !== undefined) {
-      updates.push("supplier_ref = ?");
+      updates.push('supplier_ref = ?');
       params.push(data.supplier_ref);
     }
-
-    if (data.notes !== undefined) {
-      updates.push("notes = ?");
-      params.push(data.notes);
-    }
-
-    // Status changes must use dedicated methods (confirm, cancel, receiveDevices)
-    if (data.status !== undefined) {
-      throw new Error("Status cannot be updated via general update endpoint. Use dedicated status transition methods.");
-    }
-
-    if (updates.length === 0) return false;
-
-    params.push(id);
-    await db.query(
-      `UPDATE purchase_orders SET ${updates.join(", ")} WHERE id = ?`,
-      params
-    );
-
-    return true;
-  },
 
     if (data.notes !== undefined) {
       updates.push('notes = ?');
@@ -362,7 +340,7 @@ export const purchaseOrderModel = {
         await qcModel.createAutoJobForDevices(connection, poId, receivedDevices, userId);
       } else if (po.requires_repair) {
         // No QC — create repair job immediately
-        await repairModel.createAutoJobForDevices(connection, poId, receivedDevices, userId);
+        await repairModel.createAutoJobForDevices(connection, poId, receivedDevices, userId, null);
       }
 
       // Update PO received quantity
@@ -406,31 +384,14 @@ export const purchaseOrderModel = {
         d.status,
         d.received_at,
         m.name as manufacturer,
-  async createWithDevices(poData, devicesData, userId) {
-    return transaction(async (connection) => {
-      // Step 1: Generate PO number with lock
-      const lockName = "purchase_order_number_lock";
-      const lockTimeout = 10;
-
-      try {
-        const [lockResult] = await connection.query(
-          `SELECT GET_LOCK(?, ?) AS lock_result`,
-          [lockName, lockTimeout]
-        );
-
-        if (lockResult[0]?.lock_result !== 1) {
-          try { await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {}); } catch (_) {}
-          throw new Error("PO_NUMBER_LOCK_TIMEOUT");
-        }
-
-        const [maxPO] = await connection.query(
-          "SELECT MAX(CAST(SUBSTRING(po_number, 4) AS UNSIGNED)) as max_num FROM purchase_orders"
-        );
-        const nextNum = (maxPO[0].max_num || 0) + 1;
-        const poNumber = `PO-${String(nextNum).padStart(5, "0")}`;
-
-        // Release lock early
-        await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {});
+        mo.model_number,
+        mo.model_name,
+        l.code as location
+      FROM devices d
+      LEFT JOIN manufacturers m ON d.manufacturer_id = m.id
+      LEFT JOIN models mo ON d.model_id = mo.id
+      LEFT JOIN locations l ON d.location_id = l.id
+      WHERE d.purchase_order_id = ?
       ORDER BY d.received_at DESC
       LIMIT ?
     `, [poId, limit]);
@@ -443,10 +404,10 @@ export const purchaseOrderModel = {
     return transaction(async (connection) => {
       // Step 1: Generate PO number
       const [maxPO] = await connection.query(
-        "SELECT MAX(CAST(SUBSTRING(po_number, 4) AS UNSIGNED)) as max_num FROM purchase_orders"
+        "SELECT MAX(CAST(SUBSTRING(po_number, 4, 6) AS SIGNED)) as max_num FROM purchase_orders WHERE po_number LIKE 'PO-%'"
       );
       const nextNum = (maxPO[0].max_num || 0) + 1;
-      const poNumber = `PO-${String(nextNum).padStart(5, '0')}`;
+      const poNumber = `PO-${String(nextNum).padStart(4, '0')}`;
 
       // Step 2: Insert purchase order
       const [poResult] = await connection.query(`

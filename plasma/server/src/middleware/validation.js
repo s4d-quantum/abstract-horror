@@ -910,6 +910,240 @@ export const validateBulkMoveDevices = [
   validate
 ];
 
+const validateAutomationEnvelope = [
+  body('quantum_event_id')
+    .matches(/^\d+$/).withMessage('quantum_event_id must be a positive integer string'),
+  body('idempotency_key')
+    .notEmpty().withMessage('idempotency_key is required')
+    .isLength({ max: 255 }).withMessage('idempotency_key is too long'),
+  body('source_event_type')
+    .notEmpty().withMessage('source_event_type is required')
+    .isLength({ max: 100 }).withMessage('source_event_type is too long'),
+  body('source_created_at')
+    .notEmpty().withMessage('source_created_at is required')
+    .isISO8601().withMessage('source_created_at must be ISO8601'),
+  body('source_user')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v))
+    .isLength({ max: 100 }).withMessage('source_user is too long'),
+  body('snapshot_generated_at')
+    .notEmpty().withMessage('snapshot_generated_at is required')
+    .isISO8601().withMessage('snapshot_generated_at must be ISO8601'),
+];
+
+export const validateAutomationPurchaseSync = [
+  param('legacyPurchaseId')
+    .matches(/^\d+$/).withMessage('legacyPurchaseId must be a positive integer string'),
+  ...validateAutomationEnvelope,
+  body('purchase').isObject().withMessage('purchase is required'),
+  body('purchase.purchase_date')
+    .optional({ nullable: true })
+    .isISO8601().withMessage('purchase.purchase_date must be ISO8601'),
+  body('purchase.po_ref')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('purchase.supplier')
+    .isObject().withMessage('purchase.supplier is required'),
+  body('purchase.supplier.supplier_code')
+    .notEmpty().withMessage('purchase.supplier.supplier_code is required'),
+  body('purchase.supplier.name')
+    .notEmpty().withMessage('purchase.supplier.name is required'),
+  body('purchase.requires_qc')
+    .optional()
+    .isBoolean().withMessage('purchase.requires_qc must be boolean')
+    .toBoolean(),
+  body('purchase.requires_repair')
+    .optional()
+    .isBoolean().withMessage('purchase.requires_repair must be boolean')
+    .toBoolean(),
+  body('purchase.notes')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('purchase.fault_description')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('purchase.devices')
+    .isArray({ min: 1 }).withMessage('purchase.devices must be a non-empty array'),
+  body('purchase.devices.*.imei')
+    .matches(/^\d{14,15}$/).withMessage('purchase.devices[].imei must be 14–15 digits'),
+  body('purchase.devices.*.tray_id')
+    .notEmpty().withMessage('purchase.devices[].tray_id is required'),
+  body('purchase.devices.*.item_brand')
+    .notEmpty().withMessage('purchase.devices[].item_brand is required'),
+  body('purchase.devices.*.item_details')
+    .notEmpty().withMessage('purchase.devices[].item_details is required'),
+  body('purchase.devices.*.item_gb')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.item_color')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.item_grade')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.received_at')
+    .optional({ nullable: true })
+    .isISO8601().withMessage('purchase.devices[].received_at must be ISO8601'),
+  validate,
+];
+
+export const validateAutomationSalesOrderSync = [
+  param('legacyOrderId')
+    .matches(/^\d+$/).withMessage('legacyOrderId must be a positive integer string'),
+  ...validateAutomationEnvelope,
+  body('sales_order').isObject().withMessage('sales_order is required'),
+  body('sales_order.order_date')
+    .optional({ nullable: true })
+    .isISO8601().withMessage('sales_order.order_date must be ISO8601'),
+  body('sales_order.customer').isObject().withMessage('sales_order.customer is required'),
+  body('sales_order.customer.customer_code')
+    .notEmpty().withMessage('sales_order.customer.customer_code is required'),
+  body('sales_order.customer.name')
+    .notEmpty().withMessage('sales_order.customer.name is required'),
+  body('sales_order.customer.is_backmarket')
+    .optional()
+    .isBoolean().withMessage('sales_order.customer.is_backmarket must be boolean')
+    .toBoolean(),
+  body('sales_order.customer_ref')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('sales_order.po_ref')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('sales_order.notes')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('sales_order.devices_authoritative')
+    .optional()
+    .isBoolean().withMessage('sales_order.devices_authoritative must be boolean')
+    .toBoolean(),
+  body('sales_order.lines')
+    .optional()
+    .isArray({ min: 1 }).withMessage('sales_order.lines must be a non-empty array when provided'),
+  body('sales_order.lines.*.supplier_code')
+    .optional()
+    .notEmpty().withMessage('sales_order.lines[].supplier_code is required'),
+  body('sales_order.lines.*.tray_id')
+    .optional()
+    .notEmpty().withMessage('sales_order.lines[].tray_id is required'),
+  body('sales_order.lines.*.item_brand')
+    .optional()
+    .notEmpty().withMessage('sales_order.lines[].item_brand is required'),
+  body('sales_order.lines.*.item_details')
+    .optional()
+    .notEmpty().withMessage('sales_order.lines[].item_details is required'),
+  body('sales_order.lines.*.item_gb')
+    .optional({ nullable: true }),
+  body('sales_order.lines.*.item_color')
+    .optional({ nullable: true }),
+  body('sales_order.lines.*.item_grade')
+    .optional({ nullable: true }),
+  body('sales_order.lines.*.requested_quantity')
+    .optional()
+    .isInt({ min: 1 }).withMessage('sales_order.lines[].requested_quantity must be a positive integer')
+    .toInt(),
+  body('sales_order.lines.*.supplier')
+    .optional({ nullable: true })
+    .isObject().withMessage('sales_order.lines[].supplier must be an object when provided'),
+  body('sales_order.devices')
+    .optional()
+    .isArray().withMessage('sales_order.devices must be an array when provided'),
+  body('sales_order.devices.*.imei')
+    .matches(/^\d{14,15}$/).withMessage('sales_order.devices[].imei must be 14–15 digits'),
+  body('sales_order.devices.*.supplier_code')
+    .notEmpty().withMessage('sales_order.devices[].supplier_code is required'),
+  body('sales_order.devices.*.tray_id')
+    .notEmpty().withMessage('sales_order.devices[].tray_id is required'),
+  body('sales_order.devices.*.item_brand')
+    .notEmpty().withMessage('sales_order.devices[].item_brand is required'),
+  body('sales_order.devices.*.item_details')
+    .notEmpty().withMessage('sales_order.devices[].item_details is required'),
+  body('sales_order.devices.*.item_gb')
+    .optional({ nullable: true }),
+  body('sales_order.devices.*.item_color')
+    .optional({ nullable: true }),
+  body('sales_order.devices.*.item_grade')
+    .optional({ nullable: true }),
+  body('sales_order.devices.*.supplier')
+    .optional({ nullable: true })
+    .isObject().withMessage('sales_order.devices[].supplier must be an object when provided'),
+  body('sales_order').custom((salesOrder) => {
+    const hasLines = Array.isArray(salesOrder?.lines) && salesOrder.lines.length > 0;
+    const hasDevices = Array.isArray(salesOrder?.devices) && salesOrder.devices.length > 0;
+
+    if (!hasLines && !hasDevices) {
+      throw new Error('sales_order must include at least one line or device');
+    }
+
+    if (salesOrder?.devices_authoritative && !hasDevices) {
+      throw new Error('sales_order.devices_authoritative requires a non-empty devices array');
+    }
+
+    return true;
+  }),
+  validate,
+];
+
+export const validateAutomationQcSync = [
+  param('legacyPurchaseId')
+    .matches(/^\d+$/).withMessage('legacyPurchaseId must be a positive integer string'),
+  ...validateAutomationEnvelope,
+  body('purchase').isObject().withMessage('purchase is required'),
+  body('purchase.devices')
+    .isArray({ min: 1 }).withMessage('purchase.devices must be a non-empty array'),
+  body('purchase.devices.*.imei')
+    .matches(/^\d{14,15}$/).withMessage('purchase.devices[].imei must be 14–15 digits'),
+  body('purchase.devices.*.functional_result')
+    .optional({ nullable: true })
+    .isIn(['PASS', 'FAIL', 'UNABLE', 'NA']).withMessage('functional_result must be PASS, FAIL, UNABLE, or NA'),
+  body('purchase.devices.*.cosmetic_result')
+    .optional({ nullable: true })
+    .isIn(['PASS', 'FAIL', 'NA']).withMessage('cosmetic_result must be PASS, FAIL, or NA'),
+  body('purchase.devices.*.non_uk')
+    .optional()
+    .isBoolean().withMessage('non_uk must be boolean')
+    .toBoolean(),
+  body('purchase.devices.*.item_functional_passed')
+    .optional({ nullable: true })
+    .isIn([0, 1, '0', '1']).withMessage('item_functional_passed must be 0 or 1'),
+  body('purchase.devices.*.item_cosmetic_passed')
+    .optional({ nullable: true })
+    .isIn([0, 1, '0', '1']).withMessage('item_cosmetic_passed must be 0 or 1'),
+  body('purchase.devices.*.item_grade')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.item_color')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.item_comments')
+    .optional({ nullable: true }),
+  body('purchase.devices.*.item_eu')
+    .optional({ nullable: true }),
+  validate,
+];
+
+export const validateAutomationDeviceMove = [
+  param('imei')
+    .matches(/^\d{14,15}$/).withMessage('imei must be 14–15 digits'),
+  ...validateAutomationEnvelope,
+  body('new_location')
+    .notEmpty().withMessage('new_location is required')
+    .trim(),
+  body('old_location')
+    .optional({ nullable: true })
+    .customSanitizer((v) => (v === '' ? null : v)),
+  body('reason')
+    .notEmpty().withMessage('reason is required')
+    .trim(),
+  body('operation_date')
+    .optional({ nullable: true })
+    .custom((v) => {
+      if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        throw new Error('operation_date must be in YYYY-MM-DD format');
+      }
+      return true;
+    }),
+  body('admin_op_id')
+    .optional({ nullable: true })
+    .matches(/^\d+$/).withMessage('admin_op_id must be a positive integer string'),
+  validate,
+];
+
 // ─── Common param validators ──────────────────────────────────────────────────
 
 // Use on routes with :id param to ensure it's a positive integer

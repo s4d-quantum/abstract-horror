@@ -1,14 +1,49 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+function getEnv(key, fallback = null) {
+  const value = process.env[key];
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : fallback;
+}
+
+function resolveDatabaseConfig() {
+  const isTest = process.env.NODE_ENV === 'test';
+
+  const host = isTest ? getEnv('TEST_DB_HOST', getEnv('DB_HOST', 'localhost')) : getEnv('DB_HOST', 'localhost');
+  const portValue = isTest ? getEnv('TEST_DB_PORT', getEnv('DB_PORT', '3306')) : getEnv('DB_PORT', '3306');
+  const user = isTest ? getEnv('TEST_DB_USER', getEnv('DB_USER')) : getEnv('DB_USER');
+  const password = isTest ? getEnv('TEST_DB_PASSWORD', getEnv('DB_PASSWORD')) : getEnv('DB_PASSWORD');
+  const database = isTest ? getEnv('TEST_DB_NAME', getEnv('DB_NAME')) : getEnv('DB_NAME');
+
+  return {
+    host,
+    port: parseInt(portValue, 10) || 3306,
+    user,
+    password,
+    database,
+  };
+}
+
+const databaseConfig = resolveDatabaseConfig();
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: databaseConfig.host,
+  port: databaseConfig.port,
+  user: databaseConfig.user,
+  password: databaseConfig.password,
+  database: databaseConfig.database,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

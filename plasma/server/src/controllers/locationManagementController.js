@@ -1,8 +1,7 @@
 import db, { transaction } from '../config/database.js';
-import { AdminOperation } from '../models/AdminOperation.js';
-import { AdminService } from '../services/adminService.js';
 import { asyncHandler } from '../middleware/validation.js';
 import { successResponse, errorResponse } from '../utils/helpers.js';
+import { applyPreparedLocationMove, prepareLocationMove } from '../services/locationMove.service.js';
 
 /**
  * Location Management Controller
@@ -56,89 +55,24 @@ export const getDeviceByImei = asyncHandler(async (req, res) => {
  */
 export const bulkMoveDevices = asyncHandler(async (req, res) => {
     // Input validation is handled by validateBulkMoveDevices middleware
-    const { devices, new_location, reason, operation_date } = req.body;
+    const { devices, new_location, reason } = req.body;
 
     const result = await transaction(async (connection) => {
-        // Get location_id for new location
-        const [locationResults] = await connection.execute(
-            'SELECT id, is_active FROM locations WHERE code = ?',
-            [new_location]
+        const movePlan = await prepareLocationMove(
+            connection,
+            {
+                imeis: devices.map((device) => device.imei),
+                newLocationCode: new_location,
+            },
         );
-
-        if (locationResults.length === 0) {
-            return {
-                isError: true,
-                message: `Location ${new_location} not found`,
-                status: 400
-            };
-        }
-
-        const locationId = locationResults[0].id;
-        const isActive = locationResults[0].is_active;
-
-        if (!isActive) {
-            return {
-                isError: true,
-                message: `Location ${new_location} is not active`,
-                status: 400
-            };
-        }
-
-        // Validate all devices and collect their current locations
-        const deviceMoves = [];
-        const imeis = devices.map(d => d.imei);
-
-        const [deviceResults] = await connection.execute(
-            `SELECT
-        d.id,
-        d.imei,
-        d.status,
-        l.code as current_location,
-        l.id as current_location_id
-      FROM devices d
-      LEFT JOIN locations l ON l.id = d.location_id
-      WHERE d.imei IN (${imeis.map(() => '?').join(',')}) AND d.status NOT IN ('OUT_OF_STOCK', 'SHIPPED', 'SCRAPPED')`,
-            imeis
-        );
-
-        // Check all devices were found
-        if (deviceResults.length !== devices.length) {
-            const foundImeis = deviceResults.map(d => d.imei);
-            const missingImeis = imeis.filter(imei => !foundImeis.includes(imei));
-            return {
-                isError: true,
-                message: `Some devices not found or not available for location move: ${missingImeis.join(', ')}`,
-                status: 400
-            };
-        }
-
-        // Check if any devices are already in the target location
-        const alreadyInLocation = deviceResults.filter(d => d.current_location === new_location);
-        if (alreadyInLocation.length > 0) {
-            return {
-                isError: true,
-                message: `Some devices are already in location ${new_location}: ${alreadyInLocation.map(d => d.imei).join(', ')}`,
-                status: 400
-            };
-        }
-
-        // Prepare device moves
-        deviceResults.forEach(device => {
-            deviceMoves.push({
-                device_id: device.id,
-                imei: device.imei,
-                old_location: device.current_location,
-                old_location_id: device.current_location_id
-            });
-        });
 
         // Create admin operation log
         const adminOpData = {
             operation_type: 'BULK_LOCATION_MOVE',
-            description: `Bulk moved ${deviceMoves.length} device(s) to ${new_location}`,
+            description: `Bulk moved ${movePlan.devices.length} device(s) to ${new_location}`,
             reason,
-            affected_count: deviceMoves.length,
-            affected_imeis: deviceMoves.map(m => m.imei),
+            affected_count: movePlan.devices.length,
+            affected_imeis: movePlan.devices.map((move) => move.imei),
             performed_by: req.user.id
         };
 
@@ -158,34 +92,22 @@ export const bulkMoveDevices = asyncHandler(async (req, res) => {
 
         const adminOpId = opResult.insertId;
 
-        // Update device locations
-        await connection.execute(
-            `UPDATE devices SET location_id = ? WHERE id IN (${deviceMoves.map(() => '?').join(',')})`,
-            [locationId, ...deviceMoves.map(m => m.device_id)]
+        await applyPreparedLocationMove(
+            connection,
+            {
+                movePlan,
+                userId: req.user.id,
+                referenceType: 'ADMIN_OPERATION',
+                referenceId: adminOpId,
+                notes: reason || null,
+            },
         );
-
-        // Log to device_history for each device
-        for (const move of deviceMoves) {
-            await connection.execute(
-                `INSERT INTO device_history 
-         (device_id, imei, event_type, field_changed, old_value, new_value, reference_type, reference_id, user_id)
-         VALUES (?, ?, 'LOCATION_CHANGE', 'location', ?, ?, 'ADMIN_OPERATION', ?, ?)`,
-                [
-                    move.device_id,
-                    move.imei,
-                    move.old_location || 'null',
-                    new_location,
-                    adminOpId,
-                    req.user.id
-                ]
-            );
-        }
 
         return {
             isError: false,
             adminOpId,
-            movedCount: deviceMoves.length,
-            devices: deviceMoves
+            movedCount: movePlan.devices.length,
+            devices: movePlan.devices
         };
     });
 

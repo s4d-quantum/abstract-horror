@@ -2,9 +2,12 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 
 const ENV_PATH = path.resolve(process.cwd(), 'server/.env');
-dotenv.config({ path: ENV_PATH });
+dotenv.config({ path: ENV_PATH, override: true });
 
 const TABLES_TO_TRUNCATE = [
+  'quantum_poller_attempts',
+  'quantum_poller_state',
+  'applied_quantum_events',
   'part_transactions',
   'part_fault_reports',
   'part_lots',
@@ -27,6 +30,12 @@ const TABLES_TO_TRUNCATE = [
   'device_history',
   'devices',
   'admin_operations',
+  'legacy_device_reserved_sales_order_map',
+  'legacy_brand_map',
+  'legacy_sales_order_map',
+  'legacy_purchase_order_map',
+  'legacy_sales_model_map',
+  'legacy_sales_brand_map',
   'tac_lookup',
   'models',
   'manufacturers',

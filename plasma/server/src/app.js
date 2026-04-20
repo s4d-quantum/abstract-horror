@@ -10,6 +10,7 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
+import automationRoutes from './routes/automationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import deviceRoutes from './routes/deviceRoutes.js';
 import manufacturerRoutes from './routes/manufacturerRoutes.js';
@@ -43,6 +44,14 @@ app.use(cors({
   credentials: true
 }));
 
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Automation routes are mounted before the shared /api limiter so backfills
+// do not inherit the public interactive limit.
+app.use('/api/automation', automationRoutes);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -57,10 +66,6 @@ if (process.env.NODE_ENV !== 'production') {
 } else {
   app.use(morgan('combined'));
 }
-
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check
 app.get('/health', (req, res) => {

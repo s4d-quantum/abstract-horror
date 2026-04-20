@@ -1,0 +1,2557 @@
+MariaDB [s4d_england_db]> -- 1. Read the next outbox batch
+MariaDB [s4d_england_db]> SELECT
+    ->   id,
+    ->   event_type,
+    ->   entity_type,
+    ->   entity_id,
+    ->   payload_json,
+    ->   source_user,
+    ->   created_at,
+    ->   idempotency_key
+    -> FROM quantum_event_outbox
+    -> WHERE id > @last_outbox_id
+    ->   AND event_type IN (
+    ->     'goods_in.device_booked',
+    ->     'sales_order.device_reserved',
+    ->     'sales_order.updated',
+    ->     'stock.device_moved',
+    ->     'qc.updated',
+    ->     'qc.device_passed',
+    ->     'qc.device_failed'
+    ->   )
+    -> ORDER BY id
+    -> LIMIT 50;
++----+-----------------------------+-------------+-----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------------------+------------------------------------------------------------------+
+| id | event_type                  | entity_type | entity_id       | payload_json                                                                                                                                                                                                                                                                                                                                             | source_user | created_at          | idempotency_key                                                  |
++----+-----------------------------+-------------+-----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------------------+------------------------------------------------------------------+
+|  1 | sales_order.device_reserved | device      | 351521280547019 | {"legacy_order_id":16189,"legacy_sales_order_row_id":633200,"imei":"351521280547019","customer_id":"CST-36","supplier_id":"SUP-167","po_ref":"34324324","customer_ref":"4341","tray_id":"TR010","item_brand":"CAT3","item_details":"A546B/DS","item_gb":"256","item_grade":"1","item_color":"Black","source":"quantum","operation":"sales_order_submit"} | 12          | 2026-04-16 14:17:53 | 3a9a76cc378ebffb9dbcfecfb45a13a5e39feee528f14843dbdf85e0a694db23 |
+|  2 | stock.device_moved          | device      | 351885210886684 | {"admin_op_id":1162,"legacy_imei_id":null,"imei":351885210886684,"old_tray_id":"TR034","new_tray_id":"REPAIR_39","operation_date":"2026-04-16","reason":"dijdms","source":"quantum","operation":"manual_stock_move"}                                                                                                                                     | 12          | 2026-04-16 14:20:34 | a0a5737348b624480fef29cd261df3896d627705ad1310fdd3181ecc0db19c1d |
+|  3 | stock.device_moved          | device      | 351885210918974 | {"admin_op_id":1162,"legacy_imei_id":null,"imei":351885210918974,"old_tray_id":"TR034","new_tray_id":"REPAIR_39","operation_date":"2026-04-16","reason":"dijdms","source":"quantum","operation":"manual_stock_move"}                                                                                                                                     | 12          | 2026-04-16 14:20:34 | 36289bc3d3d05ac6b81c1317143f7403285e1822ebd14c041e56dc10c860e933 |
+|  4 | stock.device_moved          | device      | 350196551215132 | {"admin_op_id":1162,"legacy_imei_id":null,"imei":350196551215132,"old_tray_id":"Backmarket_Buyback","new_tray_id":"REPAIR_39","operation_date":"2026-04-16","reason":"dijdms","source":"quantum","operation":"manual_stock_move"}                                                                                                                        | 12          | 2026-04-16 14:20:34 | 13fada86768c4648a9d77413ec302d6d29792604d92af7322b0f6bf6004082ee |
+|  5 | stock.device_moved          | device      | 351885210787106 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210787106","old_tray_id":"TR012","new_tray_id":"TR004","source":"quantum","operation":"item_details_tray_update"}                                                                                                                                                                         | 12          | 2026-04-16 15:40:12 | 49b68100874da3331e5e96527c279152cc1a57f0fea5c08494e71929c86d6ee6 |
+|  6 | goods_in.device_booked      | device      | 355680653981035 | {"purchase_id":8713,"legacy_imei_id":null,"imei":"355680653981035","item_tac":"35568065","tray_id":"TR001","supplier_id":"SUP-167","purchase_date":"2026-04-16","po_ref":"4324","qc_required":0,"repair_required":0,"item_color":"Titanium Grey","item_grade":"1","item_gb":"256","source":"quantum","operation":"goods_in_submit"}                      | 12          | 2026-04-16 15:42:16 | 679e90b58585384e95d3b33979237d0a2ea33ccc7f1f7fd4c17011d12393fbf1 |
+|  7 | qc.updated                  | device      | 351885210597083 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210597083","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":0,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | fe1a0b174f0d472661bccfb414402dd6186d3fb05e4167cf6923f81a12fc1817 |
+|  8 | qc.updated                  | device      | 351885210600382 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210600382","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | ebe91b914fb0b42f043513f8e3f9b18b248a8bd279ab402a9f7b84c5e774c0da |
+|  9 | qc.updated                  | device      | 351885210614912 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210614912","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 5a2d585bef335294fb8ee944a3a59e3b3744b9d62d75ef7e0c04f63685226b26 |
+| 10 | qc.updated                  | device      | 351885210627260 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210627260","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":0,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 4f2a1bf64e23af796ec01373dd57b8273ebf306014865c9f6bee291a87446f72 |
+| 11 | qc.updated                  | device      | 351885210627542 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210627542","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":0,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | ac469c41e02c288ee93a0145a89a7ac438cc296a008b56709fa8de8903c1d5fd |
+| 12 | qc.updated                  | device      | 351885210634126 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210634126","item_grade":4,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":0,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 8d7fa717506ab9fc80ddb360ef276572fb6534ef407322b1728d42cbaf487ecb |
+| 13 | qc.updated                  | device      | 351885210655998 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210655998","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | fb22d2acddafe08da0e27fb11429a60612c5da3a1ed17c7aa878cd2c345b11f5 |
+| 14 | qc.updated                  | device      | 351885210668157 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210668157","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | db7000bf2a6540ab5e42e5e3c8d769f6ee4f2779135b2cf26f5ebd912e00018e |
+| 15 | qc.updated                  | device      | 351885210668363 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210668363","item_grade":5,"item_color":"Titanium Grey","item_comments":"no power and cracked","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":0,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                          | 12          | 2026-04-16 16:06:25 | e819d278a699c7840b8908d23fa1e9bfca43b6d35bef528535f740b4d4c4c1c9 |
+| 16 | qc.updated                  | device      | 351885210682463 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210682463","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 80acc8a376a82c04d844a92d85f6f6809e8b0696b536e87a87262c2c69c5196f |
+| 17 | qc.updated                  | device      | 351885210689401 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210689401","item_grade":2,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | ee5a308866b8e21986a914c27ae7e4940ae33eff7655f436876323d7c1f86915 |
+| 18 | qc.updated                  | device      | 351885210702717 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210702717","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":0,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 9f2b8a9ed962f6552deb8a1681f749a1dc45d994bcc1e7ccfa540793f7ace540 |
+| 19 | qc.updated                  | device      | 351885210711148 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210711148","item_grade":2,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":0,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | 387684706bbfad914ad157fb1c59b4e5865386c96d37775df1a8e6e6f9b3bb74 |
+| 20 | qc.updated                  | device      | 351885210714373 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210714373","item_grade":1,"item_color":"Titanium Grey","item_comments":"-","item_eu":"EU-UK","item_flashed":-1,"item_cosmetic_passed":1,"item_functional_passed":1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                             | 12          | 2026-04-16 16:06:25 | f4a4a04281f3efc1e5ae56a60fd2a89357d8a15b68adbf5e7a5bbee3e6068e64 |
+| 21 | qc.updated                  | device      | 351885210719646 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210719646","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | e9a9f697341276de9cbb75b4d38ac67cc04f0e400d729483b134b807302348f1 |
+| 22 | qc.updated                  | device      | 351885210719760 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210719760","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 26409b24947ccc612b8e74df5830f66e63771d02aba4223cfe4ba4bdf33a1bca |
+| 23 | qc.updated                  | device      | 351885210719950 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210719950","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | dbee55523299862341a8307b71cc8d1e3ae0695bfe0c264f91b91cd578cb41da |
+| 24 | qc.updated                  | device      | 351885210722129 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210722129","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | ecb768b5b8b3592d7f5bde360878476525fb96a5df17b952d02ad7d83a715542 |
+| 25 | qc.updated                  | device      | 351885210722186 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210722186","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 646343c3311e72817eaec5a4f9c086fcb409f024740826f918472f6d10baeda4 |
+| 26 | qc.updated                  | device      | 351885210773502 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210773502","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | a8e1e03a358f5f0e8bb7c361f4a8db8b698978596d5fcbbf8a12a84929c11c78 |
+| 27 | qc.updated                  | device      | 351885210775762 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210775762","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 023a2dda50f301cc578356916894aa07c1f1e5289821be2e5d850f4da90d85bc |
+| 28 | qc.updated                  | device      | 351885210782578 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210782578","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 1a5c9b139d1cffb6de20e427677452d4ba385ca216324d43e82b82cb5a8ca78b |
+| 29 | qc.updated                  | device      | 351885210785324 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210785324","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 43c215045dc10f30d2a694c5e621c08de4cc5845e210e13f13366ca54a992c29 |
+| 30 | qc.updated                  | device      | 351885210787106 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210787106","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 347937da4e099441e5faf3b7d9c5ee7aca6059f7a67fe8014d56f135c54d598d |
+| 31 | qc.updated                  | device      | 351885210790209 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210790209","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 256cd0b5e29d4e57c6816cb9b799cda8f6abf4b8486edd18bfcd666f010f832b |
+| 32 | qc.updated                  | device      | 351885210878905 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210878905","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 9482c79c9ff4f7abd89f380b5b5be88f07cb7085f04efd970b4809300b202a03 |
+| 33 | qc.updated                  | device      | 351885210884085 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210884085","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 4aba9322cf79917cdb2930d5c0a4e7508347c19dfb511c3f2e90a7b4eca0cd22 |
+| 34 | qc.updated                  | device      | 351885210886502 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210886502","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | ff9da6d07d8626bad73bb5f1bf86bcc238b279d2a30adabfd8afa63f80ae077e |
+| 35 | qc.updated                  | device      | 351885210886684 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210886684","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 1d7fc6f67369e1d972b03d48daaf0dba95c9d9610a09b9251e740dccbca24b2c |
+| 36 | qc.updated                  | device      | 351885210888342 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210888342","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | c6f0e916296e1977be084a425b84b65e0750177b230519411d425ec0f735eb51 |
+| 37 | qc.updated                  | device      | 351885210889852 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210889852","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 1cf237be4071e4c73261f0352b7c85c361552db89037f08df270c80c810df238 |
+| 38 | qc.updated                  | device      | 351885210893425 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210893425","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | ccc9b57fd690a0d9cc9bc0653374c2a3eba2b90182abe47c71565817ce96f085 |
+| 39 | qc.updated                  | device      | 351885210897939 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210897939","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | dfc9787fa5822e23cde0ba1be193bc0ed6c42ef500086441e00b234e86264534 |
+| 40 | qc.updated                  | device      | 351885210904552 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210904552","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 08d735b1a64ac9f3daf295a97273e57c7ff748c48aa5c7867426bea107b3047d |
+| 41 | qc.updated                  | device      | 351885210907381 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210907381","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | cb8160e0ca8be69af1d6920e818c7c36720e7eb6fa1c4a8c30aaf884750cae7b |
+| 42 | qc.updated                  | device      | 351885210915715 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210915715","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 0efb4bfba6cca70e56a60d90fc0bfc1892f7be9b008c49b596b94721bf983d0a |
+| 43 | qc.updated                  | device      | 351885210918974 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210918974","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | c4403f9de1ec0a591eb07b8703bfa9b7114ae1922ba1d36a036228b8d6fe3723 |
+| 44 | qc.updated                  | device      | 351885210928007 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210928007","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 73a6778995071283f82235d8c65f6b3c4e16088dc611aaec8f8956d9121544b6 |
+| 45 | qc.updated                  | device      | 351885210928155 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210928155","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 5423ce59ad5dcc8e14f6eab8dcca8cef059b4c2ef77756d4aa4122c5b9fb59f8 |
+| 46 | qc.updated                  | device      | 351885210939236 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885210939236","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | aa62dab406be86f9ae8dbe0ef2f5b5d1f071ee284ea15101e4bc48dd850e8b16 |
+| 47 | qc.updated                  | device      | 351885216732452 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885216732452","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 7b6a12dc46029e7217ff3a17a6938c48369100518906883a577d538d1a604958 |
+| 48 | qc.updated                  | device      | 351885216760800 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885216760800","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | 47ff602ad20c3eb19a3fd360c98f0453cf0641f2b2401681ef5157bf9fe0a4ed |
+| 49 | qc.updated                  | device      | 351885216796200 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885216796200","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | d5be9c3b094005274338fcb1b2fcd1dcc7982bb2ed508664ad49a06c3a564415 |
+| 50 | qc.updated                  | device      | 351885216847185 | {"legacy_purchase_id":8708,"legacy_imei_id":null,"imei":"351885216847185","item_grade":0,"item_color":"Titanium Grey","item_comments":"-","item_eu":"-1","item_flashed":-1,"item_cosmetic_passed":-1,"item_functional_passed":-1,"qc_completed":0,"source":"quantum","operation":"qc_save"}                                                              | 12          | 2026-04-16 16:06:25 | ecfa9a44fb3e9740e81a1e551f0ac35253431eafabe660cfc6088fff86a51f54 |
++----+-----------------------------+-------------+-----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------------------+------------------------------------------------------------------+
+50 rows in set (0.001 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   p.purchase_id,
+    ->   p.user_id,
+    ->   p.date,
+    ->   p.po_ref,
+    ->   p.supplier_id,
+    ->   p.qc_required,
+    ->   p.repair_required,
+    ->   s.supplier_id AS supplier_code,
+    ->   s.name AS supplier_name,
+    ->   s.address AS address_line1,
+    ->   s.address2 AS address_line2,
+    ->   s.city,
+    ->   s.postcode,
+    ->   s.country,
+    ->   s.phone,
+    ->   s.email,
+    ->   s.vat AS vat_number
+    -> FROM tbl_purchases p
+    -> LEFT JOIN tbl_suppliers s
+    ->   ON s.supplier_id = p.supplier_id
+    -> WHERE p.purchase_id = @legacy_purchase_id
+    -> ORDER BY p.id
+    -> LIMIT 1;
++-------------+---------+------------+--------+-------------+-------------+-----------------+---------------+---------------+-----------------------------+---------------+------+----------+---------+-----------------+-----------------------------+--------------------------------------+
+| purchase_id | user_id | date       | po_ref | supplier_id | qc_required | repair_required | supplier_code | supplier_name | address_line1               | address_line2 | city | postcode | country | phone           | email                       | vat_number                           |
++-------------+---------+------------+--------+-------------+-------------+-----------------+---------------+---------------+-----------------------------+---------------+------+----------+---------+-----------------+-----------------------------+--------------------------------------+
+|        8713 |      12 | 2026-04-16 | 4324   | SUP-167     |           0 |               0 | SUP-167       | Foxway 0U     | Killustiku pÃµik 1, Tartu   |               |      |          | ESTONIA | +372 5373 5370  | accounts.estonia@foxway.com | VAT - EE10813057 - EORI - EE12703942 |
++-------------+---------+------------+--------+-------------+-------------+-----------------+---------------+---------------+-----------------------------+---------------+------+----------+---------+-----------------+-----------------------------+--------------------------------------+
+1 row in set (0.001 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   i.purchase_id,
+    ->   i.item_imei,
+    ->   i.item_tac,
+    ->   i.item_color,
+    ->   i.item_grade,
+    ->   i.item_gb,
+    ->   i.created_at,
+    ->   i.status,
+    ->   i.in_sales_order,
+    ->   t.item_brand,
+    ->   t.item_details
+    -> FROM tbl_imei i
+    -> LEFT JOIN tbl_tac t
+    ->   ON t.item_tac = i.item_tac
+    -> WHERE i.purchase_id = @legacy_purchase_id
+    -> ORDER BY i.id;
++-------------+-----------------+----------+---------------+------------+---------+------------+--------+----------------+------------+--------------+
+| purchase_id | item_imei       | item_tac | item_color    | item_grade | item_gb | created_at | status | in_sales_order | item_brand | item_details |
++-------------+-----------------+----------+---------------+------------+---------+------------+--------+----------------+------------+--------------+
+|        8713 | 355680653981035 | 35568065 | Titanium Grey |          1 | 256     | NULL       |      1 |           NULL | CAT3       | S921B/DS     |
++-------------+-----------------+----------+---------------+------------+---------+------------+--------+----------------+------------+--------------+
+1 row in set (0.001 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   q.purchase_id,
+    ->   q.item_code,
+    ->   q.item_comments,
+    ->   q.item_cosmetic_passed,
+    ->   q.item_functional_passed,
+    ->   q.item_eu,
+    ->   q.item_flashed,
+    ->   q.user_id,
+    ->   i.item_imei,
+    ->   i.item_tac,
+    ->   i.item_color,
+    ->   i.item_grade,
+    ->   i.item_gb,
+    ->   i.status,
+    ->   t.item_brand,
+    ->   t.item_details
+    -> FROM tbl_qc_imei_products q
+    -> LEFT JOIN tbl_imei i
+    ->   ON i.item_imei = q.item_code
+    ->  AND i.purchase_id = q.purchase_id
+    -> LEFT JOIN tbl_tac t
+    ->   ON t.item_tac = i.item_tac
+    -> WHERE q.purchase_id = @legacy_purchase_id
+    -> ORDER BY q.id;
+Empty set (0.063 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   so.order_id,
+    ->   so.date,
+    ->   so.customer_id,
+    ->   so.supplier_id,
+    ->   so.item_brand,
+    ->   so.item_details,
+    ->   so.item_color,
+    ->   so.item_grade,
+    ->   so.item_gb,
+    ->   so.tray_id,
+    ->   so.po_ref,
+    ->   so.customer_ref,
+    ->   so.item_code,
+    ->   c.customer_id AS customer_code,
+    ->   c.name AS customer_name,
+    ->   c.address AS address_line1,
+    ->   c.address2 AS address_line2,
+    ->   c.city,
+    ->   c.postcode,
+    ->   c.country,
+    ->   c.phone,
+    ->   c.email,
+    ->   c.vat AS vat_number
+    -> FROM tbl_imei_sales_orders so
+    -> LEFT JOIN tbl_customers c
+    ->   ON c.customer_id = so.customer_id
+    -> WHERE so.order_id = @legacy_order_id
+    -> ORDER BY so.id;
++----------+---------------------+-------------+-------------+------------+--------------+------------+------------+---------+---------+----------+--------------+-----------------+---------------+---------------+-------------------------------+---------------+--------------+----------+----------------+-------+-----------------+------------+
+| order_id | date                | customer_id | supplier_id | item_brand | item_details | item_color | item_grade | item_gb | tray_id | po_ref   | customer_ref | item_code       | customer_code | customer_name | address_line1                 | address_line2 | city         | postcode | country        | phone | email           | vat_number |
++----------+---------------------+-------------+-------------+------------+--------------+------------+------------+---------+---------+----------+--------------+-----------------+---------------+---------------+-------------------------------+---------------+--------------+----------+----------------+-------+-----------------+------------+
+|    16189 | 2026-04-16 00:00:00 | CST-36      | SUP-167     | CAT3       | A546B/DS     | Black      | 1          | 256     | TR010   | 34324324 | 4341         | 351521280547019 | CST-36        | Buy IT Ltd    | Unit A Trident Business Park  | Leeds Road    | Huddersfield | HD2 1UA  | United Kingdom |       | Adam@s4dltd.com |            |
++----------+---------------------+-------------+-------------+------------+--------------+------------+------------+---------+---------+----------+--------------+-----------------+---------------+---------------+-------------------------------+---------------+--------------+----------+----------------+-------+-----------------+------------+
+1 row in set (0.001 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   i.in_sales_order AS legacy_order_id,
+    ->   i.item_imei,
+    ->   i.item_tac,
+    ->   i.item_color,
+    ->   i.item_grade,
+    ->   i.item_gb,
+    ->   i.purchase_id,
+    ->   t.item_brand,
+    ->   t.item_details
+    -> FROM tbl_imei i
+    -> LEFT JOIN tbl_tac t
+    ->   ON t.item_tac = i.item_tac
+    -> WHERE i.in_sales_order = @legacy_order_id
+    -> ORDER BY i.id;
++-----------------+-----------------+----------+------------+------------+---------+-------------+------------+--------------+
+| legacy_order_id | item_imei       | item_tac | item_color | item_grade | item_gb | purchase_id | item_brand | item_details |
++-----------------+-----------------+----------+------------+------------+---------+-------------+------------+--------------+
+|           16189 | 351521280547019 | 35152128 | Black      |          1 | 256     |        8482 | CAT3       | A546B/DS     |
++-----------------+-----------------+----------+------------+------------+---------+-------------+------------+--------------+
+1 row in set (0.091 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   so.order_id,
+    ->   so.item_code AS item_imei,
+    ->   so.supplier_id,
+    ->   so.item_brand,
+    ->   so.item_details,
+    ->   so.item_color,
+    ->   so.item_grade,
+    ->   so.item_gb,
+    ->   so.tray_id
+    -> FROM tbl_imei_sales_orders so
+    -> WHERE so.order_id = @legacy_order_id
+    ->   AND so.item_code IS NOT NULL
+    ->   AND TRIM(so.item_code) <> ''
+    -> ORDER BY so.id;
++----------+-----------------+-------------+------------+--------------+------------+------------+---------+---------+
+| order_id | item_imei       | supplier_id | item_brand | item_details | item_color | item_grade | item_gb | tray_id |
++----------+-----------------+-------------+------------+--------------+------------+------------+---------+---------+
+|    16189 | 351521280547019 | SUP-167     | CAT3       | A546B/DS     | Black      | 1          | 256     | TR010   |
++----------+-----------------+-------------+------------+--------------+------------+------------+---------+---------+
+1 row in set (0.002 sec)
+
+MariaDB [s4d_england_db]> SELECT
+    ->   (SELECT COUNT(*) FROM tbl_imei WHERE in_sales_order = @legacy_order_id) AS exact_reserved_count,
+    ->   (SELECT COUNT(*) FROM tbl_imei_sales_orders
+    ->     WHERE order_id = @legacy_order_id
+    ->       AND item_code IS NOT NULL
+    ->       AND TRIM(item_code) <> '') AS line_item_code_count,
+    ->   (SELECT COUNT(*) FROM tbl_imei_sales_orders
+    ->     WHERE order_id = @legacy_order_id) AS total_line_count;
++----------------------+----------------------+------------------+
+| exact_reserved_count | line_item_code_count | total_line_count |
++----------------------+----------------------+------------------+
+|                    1 |                    1 |                1 |
++----------------------+----------------------+------------------+
+1 row in set (0.048 sec)
+
+MariaDB [s4d_england_db]> 
+MariaDB [s4d_england_db]> -- 9. Distinct purchase-side CATxx/details pairs
+MariaDB [s4d_england_db]> SELECT
+    ->   t.item_brand,
+    ->   t.item_details,
+    ->   COUNT(*) AS usage_count
+    -> FROM tbl_imei i
+    -> JOIN tbl_tac t
+    ->   ON t.item_tac = i.item_tac
+    -> GROUP BY t.item_brand, t.item_details
+    -> ORDER BY usage_count DESC, t.item_brand, t.item_details;
++------------+------------------------------------+-------------+
+| item_brand | item_details                       | usage_count |
++------------+------------------------------------+-------------+
+| CAT1       | iPhone 11                          |       13463 |
+| CAT1       | iPhone 8                           |       10184 |
+| CAT1       | iPhone X                           |        8342 |
+| CAT3       | S908B/DS                           |        7623 |
+| CAT3       | S918B/DS                           |        7313 |
+| CAT3       | G981B/DS                           |        6425 |
+| CAT3       | S928B/DS                           |        5979 |
+| CAT1       | iPhone SE 2                        |        5896 |
+| CAT3       | S938B/DS                           |        5834 |
+| CAT3       | S901B/DS                           |        5507 |
+| CAT3       | G950F                              |        5461 |
+| CAT3       | G975F/DS                           |        5198 |
+| CAT1       | iPhone 7                           |        5115 |
+| CAT3       | G973F/DS                           |        5058 |
+| CAT1       | iPhone 13                          |        5034 |
+| CAT1       | iPhone XS                          |        4626 |
+| CAT1       | iPhone 12                          |        4624 |
+| CAT3       | G998B/DS                           |        4407 |
+| CAT3       | A146P/DS                           |        4147 |
+| CAT1       | iPhone XR                          |        4014 |
+| CAT1       | iPhone 12 Pro                      |        3678 |
+| CAT3       | S921B/DS                           |        3626 |
+| CAT1       | iPhone 14                          |        3545 |
+| CAT3       | A127F/DS                           |        3527 |
+| CAT1       | iPhone 11 Pro                      |        3307 |
+| CAT3       | S911B/DS                           |        3133 |
+| CAT3       | F721B                              |        3131 |
+| CAT1       | iPhone SE 2022                     |        3090 |
+| CAT3       | F731B                              |        2946 |
+| CAT3       | A145R/DS                           |        2941 |
+| CAT3       | G935F                              |        2920 |
+| CAT1       | iPhone 12 Mini                     |        2908 |
+| CAT1       | iPhone 14 Plus                     |        2907 |
+| CAT3       | A566B/DS                           |        2892 |
+| CAT3       | G960F                              |        2892 |
+| CAT3       | G955F                              |        2824 |
+| CAT3       | A137F/DS                           |        2694 |
+| CAT3       | G991B/DS                           |        2542 |
+| CAT3       | S931B/DS                           |        2484 |
+| CAT3       | F946B/DS                           |        2283 |
+| CAT3       | S926B/DS                           |        2163 |
+| CAT3       | A556B/DS                           |        2139 |
+| CAT3       | S721B/DS                           |        1985 |
+| CAT3       | F741B                              |        1958 |
+| CAT1       | iPhone 8 Plus                      |        1903 |
+| CAT3       | G988B/DS                           |        1790 |
+| CAT3       | G965F                              |        1776 |
+| CAT16      | Nokia 7.1                          |        1760 |
+| CAT3       | N986B/DS                           |        1709 |
+| CAT3       | F956B/DS                           |        1567 |
+| CAT3       | A546B/DS                           |        1532 |
+| CAT1       | iPhone 12 Pro Max                  |        1523 |
+| CAT1       | iPhone 17 Pro Max                  |        1511 |
+| CAT6       | Xperia L3                          |        1503 |
+| CAT1       | iPhone 13 Pro                      |        1485 |
+| CAT6       | Xperia 5                           |        1444 |
+| CAT6       | Xperia L1                          |        1423 |
+| CAT6       | Xperia XA2                         |        1375 |
+| CAT6       | Xperia XZ3                         |        1341 |
+| CAT6       | Xperia 10                          |        1336 |
+| CAT1       | iPhone 13 Pro Max                  |        1326 |
+| CAT3       | A536B/DS                           |        1310 |
+| CAT6       | Xperia XZ2                         |        1295 |
+| CAT3       | F936B/DS                           |        1276 |
+| CAT3       | A346B/DS                           |        1255 |
+| CAT3       | G986B/DS                           |        1247 |
+| CAT3       | S711B/DS                           |        1233 |
+| CAT3       | A326B/DS                           |        1218 |
+| CAT5       | P20 Lite                           |        1195 |
+| CAT1       | iPhone 14 Pro                      |        1145 |
+| CAT1       | iPhone 13 Mini                     |        1124 |
+| CAT2       | Pixel 7a                           |        1104 |
+| CAT1       | iPhone 11 Pro Max                  |        1095 |
+| CAT3       | F966B/DS                           |        1085 |
+| CAT1       | iPhone XS Max                      |        1014 |
+| CAT3       | A528B/DS                           |        1002 |
+| CAT3       | F766B                              |         997 |
+| CAT3       | A156B/DS                           |         977 |
+| CAT6       | Xperia 1 V                         |         963 |
+| CAT3       | G996B/DS                           |         958 |
+| CAT3       | SM-T515                            |         917 |
+| CAT3       | A155F/DS                           |         915 |
+| CAT5       | Mate 20 Pro                        |         898 |
+| CAT6       | Xperia 1                           |         874 |
+| CAT5       | P30 Pro/DS                         |         870 |
+| CAT3       | G780G/DS                           |         858 |
+| CAT3       | A176B/DS                           |         852 |
+| CAT3       | A505FN/DS                          |         843 |
+| CAT3       | S906B/DS                           |         835 |
+| CAT3       | A135F/DS                           |         810 |
+| CAT3       | G960F/DS                           |         800 |
+| CAT3       | G781B/DS                           |         786 |
+| CAT3       | A515F/DS                           |         784 |
+| CAT3       | G990B2/DS                          |         778 |
+| CAT3       | N976B                              |         758 |
+| CAT3       | S916B/DS                           |         754 |
+| CAT3       | A705FN/DS                          |         728 |
+| CAT3       | G930F                              |         712 |
+| CAT3       | G990B/DS                           |         710 |
+| CAT6       | Xperia XZ1 Compact                 |         708 |
+| CAT6       | Xperia 10 V                        |         684 |
+| CAT6       | Xperia 5 III                       |         674 |
+| CAT3       | G965F/DS                           |         671 |
+| CAT3       | A125F/DS                           |         659 |
+| CAT5       | P20 Pro                            |         657 |
+| CAT3       | A236B/DS                           |         653 |
+| CAT3       | G980F/DS                           |         641 |
+| CAT3       | S936B/DS                           |         639 |
+| CAT6       | Xperia 10 III                      |         634 |
+| CAT3       | F711B                              |         618 |
+| CAT1       | iPhone 15 Pro                      |         595 |
+| CAT3       | N960F/DS                           |         580 |
+| CAT3       | A336B/DS                           |         557 |
+| CAT3       | A366B/DS                           |         557 |
+| CAT3       | A165F/DS                           |         547 |
+| CAT3       | A166B/DS                           |         545 |
+| CAT6       | Xperia 1 IV                        |         536 |
+| CAT3       | F926B/DS                           |         531 |
+| CAT6       | Xperia XA1                         |         528 |
+| CAT3       | G780F/DS                           |         518 |
+| CAT5       | P30 Lite                           |         516 |
+| CAT23      | A3 Plus                            |         513 |
+| CAT3       | S948B/DS                           |         507 |
+| CAT3       | S731B/DS                           |         499 |
+| CAT3       | A202F/DS                           |         484 |
+| CAT6       | Xperia 10 II                       |         473 |
+| CAT3       | A226B/DS                           |         463 |
+| CAT6       | Xperia 10 IV                       |         462 |
+| CAT6       | Xperia 1 III                       |         455 |
+| CAT3       | SM-A805F/DS                        |         451 |
+| CAT3       | A156E/DS                           |         450 |
+| CAT6       | XZ Premium                         |         448 |
+| CAT1       | iPad Pro 10.5 4G GSM               |         447 |
+| CAT3       | A256B/DS                           |         434 |
+| CAT3       | N950F                              |         434 |
+| CAT1       | iPhone 17 Pro                      |         423 |
+| CAT6       | Xperia L2                          |         417 |
+| CAT1       | iPhone 7 Plus                      |         414 |
+| CAT6       | Xperia XA1 Ultra                   |         404 |
+| CAT5       | P30 Pro                            |         400 |
+| CAT6       | Xperia XZ2 Compact                 |         395 |
+| CAT3       | G970F/DS                           |         394 |
+| CAT6       | Xperia 5 II                        |         392 |
+| CAT16      | Nokia 5.1                          |         387 |
+| CAT3       | N975F/DS                           |         386 |
+| CAT3       | F761B                              |         377 |
+| CAT6       | Xperia 1 VI                        |         375 |
+| CAT6       | Xperia 5 IV                        |         370 |
+| CAT6       | Xperia L 4                         |         361 |
+| CAT24      | Q2                                 |         359 |
+| CAT3       | A356B/DS                           |         356 |
+| CAT6       | Xperia 10 VI                       |         356 |
+| CAT3       | A920F                              |         350 |
+| CAT1       | iPhone 16 Pro Max                  |         341 |
+| CAT6       | Xperia 1 II                        |         331 |
+| CAT3       | G977B                              |         325 |
+| CAT3       | A057G/DS                           |         313 |
+| CAT5       | P20                                |         309 |
+| CAT3       | G525F/DS                           |         300 |
+| CAT3       | N970F/DS                           |         289 |
+| CAT6       | Xperia XZ1                         |         287 |
+| CAT3       | A175F/DS                           |         280 |
+| CAT3       | A715F/DS                           |         268 |
+| CAT1       | iPhone 15 Pro Max                  |         264 |
+| CAT1       | iPad  2018 A 1954                  |         263 |
+| CAT3       | A725F/DS                           |         252 |
+| CAT2       | Pixel 7                            |         248 |
+| CAT2       | Pixel 10                           |         240 |
+| CAT5       | Mate 20Lite                        |         240 |
+| CAT6       | Xperia 5 V                         |         239 |
+| CAT1       | iPhone 6S                          |         238 |
+| CAT3       | S937B/DS                           |         237 |
+| CAT3       | S942B/DS                           |         220 |
+| CAT1       | iPhone 14 Pro Max                  |         216 |
+| CAT3       | A415F/DS                           |         210 |
+| CAT3       | N770F/DS                           |         206 |
+| CAT3       | N950F/DS                           |         205 |
+| CAT6       | Xperia XZ                          |         204 |
+| CAT1       | iPad A1823                         |         202 |
+| CAT1       | iPhone 6                           |         196 |
+| CAT1       | iPhone SE2                         |         185 |
+| CAT1       | iPad 10.2 Cellular                 |         170 |
+| CAT3       | A105FN                             |         166 |
+| CAT3       | SMT505                             |         160 |
+| CAT5       | P30                                |         157 |
+| CAT2       | Pixel 8A                           |         153 |
+| CAT5       | P40 Lite                           |         145 |
+| CAT1       | A2072                              |         143 |
+| CAT1       | iPhone SE                          |         143 |
+| CAT34      | Poco X3 Pro                        |         140 |
+| CAT2       | Pixel 6a                           |         139 |
+| CAT3       | N960F                              |         139 |
+| CAT2       | Pixel 2 XL                         |         136 |
+| CAT2       | Pixel 7 Pro                        |         134 |
+| CAT3       | A908B                              |         134 |
+| CAT3       | A047F/DS                           |         133 |
+| CAT3       | A750FN                             |         131 |
+| CAT1       | iPad Pro 2nd Gen 12.9 Inch         |         129 |
+| CAT3       | S947B/DS                           |         128 |
+| CAT3       | A520F                              |         125 |
+| CAT5       | Mate 10 Pro                        |         123 |
+| CAT5       | P30 /DS                            |         123 |
+| CAT5       | P30 Lite/DS                        |         118 |
+| CAT3       | G975F                              |         113 |
+| CAT3       | A105F/DS                           |         111 |
+| CAT3       | N981B/DS                           |         107 |
+| CAT3       | A136B/DS                           |         105 |
+| CAT1       | iPad Pro 12.9 (1st Gen)  Wifi + 4G |         100 |
+| CAT23      | 5033XR                             |         100 |
+| CAT5       | Huawei MediaPad T3 10              |         100 |
+| CAT2       | Pixel 3 XL                         |          99 |
+| CAT3       | SM-G525F/DS                        |          98 |
+| CAT5       | Y5p                                |          97 |
+| CAT2       | Pixel 6                            |          96 |
+| CAT5       | P Smart 2019                       |          94 |
+| CAT6       | Xperia X                           |          91 |
+| CAT2       | Pixel 6 Pro                        |          90 |
+| CAT35      | P60 Pro                            |          90 |
+| CAT2       | Pixel 3a                           |          88 |
+| CAT3       | G998U                              |          88 |
+| CAT1       | iPad Pro 11                        |          84 |
+| CAT3       | Tab A T585                         |          80 |
+| CAT23      | 2038X                              |          76 |
+| CAT1       | iPad Pro 9.7 MLQ32LL/A             |          75 |
+| CAT1       | iPhone 15                          |          74 |
+| CAT3       | G985F/DS                           |          74 |
+| CAT3       | A266B/DS                           |          72 |
+| CAT2       | Pixel 3a XL                        |          69 |
+| CAT2       | Pixel 8 Pro                        |          68 |
+| CAT16      | 5.3                                |          66 |
+| CAT3       | A217F/DS                           |          64 |
+| CAT3       | G900F                              |          64 |
+| CAT3       | G973F                              |          63 |
+| CAT3       | SM-T725                            |          62 |
+| CAT6       | Xperia E1                          |          61 |
+| CAT3       | A405FN/DS                          |          60 |
+| CAT3       | A426B/DS                           |          60 |
+| CAT3       | Galaxy Fold 5G F907F               |          60 |
+| CAT3       | A526B/DS                           |          59 |
+| CAT3       | G925F                              |          59 |
+| CAT5       | Y5 II                              |          59 |
+| CAT6       | Xperia XA                          |          57 |
+| CAT6       | Xperia X Compact                   |          55 |
+| CAT5       | P9                                 |          54 |
+| CAT5       | Mate 20 Lite                       |          53 |
+| CAT3       | A105FN/DS                          |          52 |
+| CAT5       | P8 Lite                            |          51 |
+| CAT5       | Mate 20 X                          |          50 |
+| CAT3       | A405F/DS                           |          49 |
+| CAT5       | P Smart                            |          47 |
+| CAT1       | iPhone 5S                          |          45 |
+| CAT22      | 7 Pro                              |          44 |
+| CAT3       | N980F/DS                           |          43 |
+| CAT16      | 3.1                                |          42 |
+| CAT3       | G770F/DS                           |          41 |
+| CAT3       | A515F DS                           |          40 |
+| CAT34      | Poco F3                            |          40 |
+| CAT34      | Poco M4 Pro 5G                     |          40 |
+| CAT2       | Pixel 8                            |          39 |
+| CAT5       | P40                                |          37 |
+| CAT5       | P40 Pro                            |          37 |
+| CAT6       | Xperia E5                          |          36 |
+| CAT1       | iPhone 6S Plus                     |          35 |
+| CAT2       | Pixel 2                            |          35 |
+| CAT2       | Pixel 9                            |          35 |
+| CAT34      | Poco M3 Pro 5G                     |          35 |
+| CAT5       | Y6 2019                            |          35 |
+| CAT6       | Xperia XA2 Ultra                   |          35 |
+| CAT3       | G955F/DS                           |          34 |
+| CAT1       | iPhone 16                          |          32 |
+| CAT22      | 8 Pro                              |          32 |
+| CAT6       | Xperia Z5                          |          32 |
+| CAT6       | Xperia Z5 Compact                  |          32 |
+| CAT1       | iPhone 16 Pro                      |          31 |
+| CAT2       | Pixel 4a                           |          31 |
+| CAT3       | SMT875                             |          30 |
+| CAT1       | iPhone 15 Plus                     |          29 |
+| CAT3       | Galaxy A6                          |          28 |
+| CAT5       | Mediapad T5                        |          28 |
+| CAT3       | A325F/DS                           |          27 |
+| CAT3       | S908E/DS                           |          27 |
+| CAT5       | HONOR View20                       |          27 |
+| CAT5       | Mate 20                            |          26 |
+| CAT5       | P smart+ 2019                      |          25 |
+| CAT2       | Pixel 10a                          |          24 |
+| CAT23      | TCL 10 5G                          |          24 |
+| CAT2       | Pixel 4                            |          23 |
+| CAT3       | A320F                              |          21 |
+| CAT3       | G991U                              |          21 |
+| CAT3       | samsung                            |          21 |
+| CAT5       | Huawei Y7                          |          21 |
+| CAT6       | Xperia Z3                          |          21 |
+| CAT1       | iPhone Air                         |          20 |
+| CAT2       | Pixel Fold 5G                      |          20 |
+| CAT23      | 1X 2019                            |          20 |
+| CAT3       | A215F/DS                           |          20 |
+| CAT3       | J600 2018                          |          20 |
+| CAT3       | R875F                              |          20 |
+| CAT3       | X216R                              |          20 |
+| CAT34      | Poco X5Pro 5G                      |          20 |
+| CAT5       | HONOR 20                           |          20 |
+| CAT6       | Xperia 10 Plus                     |          19 |
+| CAT6       | Xperia Z5 Premium                  |          19 |
+| CAT34      | 13T Pro                            |          18 |
+| CAT5       | Mate 20 Lite D/S                   |          18 |
+| CAT5       | P9 Lite                            |          18 |
+| CAT6       | Xperia M4                          |          18 |
+| CAT1       | MTGN2B/A                           |          17 |
+| CAT20      | Xiaomi Mi 10                       |          17 |
+| CAT3       | A515F/DSN                          |          17 |
+| CAT2       | Pixel 3                            |          16 |
+| CAT2       | Pixel 9 Pro                        |          16 |
+| CAT2       | Pixel 9 Pro XL                     |          16 |
+| CAT3       | A600F                              |          16 |
+| CAT3       | F916B                              |          16 |
+| CAT3       | J530F                              |          16 |
+| CAT3       | N985F/DS                           |          16 |
+| CAT1       | iPhone 6 Plus                      |          15 |
+| CAT3       | G390F                              |          15 |
+| CAT3       | X716B                              |          15 |
+| CAT5       | Y6 2017                            |          15 |
+| CAT23      | U3                                 |          14 |
+| CAT3       | A415F DS                           |          14 |
+| CAT3       | N910F                              |          14 |
+| CAT1       | iPad Air 4th Gen                   |          13 |
+| CAT11      | XT1955-4                           |          13 |
+| CAT3       | G903F                              |          13 |
+| CAT3       | Galaxy A8                          |          13 |
+| CAT3       | J320F                              |          13 |
+| CAT3       | S911U                              |          13 |
+| CAT5       | Y360                               |          13 |
+| CAT16      | G21                                |          12 |
+| CAT2       | Pixel 9a                           |          12 |
+| CAT22      | 7 T                                |          12 |
+| CAT3       | N986O/DS                           |          12 |
+| CAT3       | S908U                              |          12 |
+| CAT5       | P10 Plus                           |          12 |
+| CAT6       | Xperia 10 Dual                     |          12 |
+| CAT3       | G975U                              |          11 |
+| CAT3       | S906U                              |          11 |
+| CAT5       | P10 Lite                           |          11 |
+| CAT5       | Y5                                 |          11 |
+| CAT5       | Y6II Compact                       |          11 |
+| CAT1       | iPhone 17                          |          10 |
+| CAT1       | iPhone 5                           |          10 |
+| CAT23      | U5                                 |          10 |
+| CAT3       | A500F/DS                           |          10 |
+| CAT3       | A525F/DS                           |          10 |
+| CAT3       | A750F                              |          10 |
+| CAT3       | F900F                              |          10 |
+| CAT3       | R885F                              |          10 |
+| CAT3       | R895F                              |          10 |
+| CAT3       | S901U                              |          10 |
+| CAT3       | SMT225                             |          10 |
+| CAT33      | ROG Phone II                       |          10 |
+| CAT5       | Honor 10                           |          10 |
+| CAT5       | Honor 8X                           |          10 |
+| CAT5       | Huawei Y6                          |          10 |
+| CAT6       | Xperia Z3 Compact                  |          10 |
+| CAT18      | 5G Home Broadband Hub              |           9 |
+| CAT22      | 7                                  |           8 |
+| CAT3       | A510F                              |           8 |
+| CAT3       | F946B                              |           8 |
+| CAT3       | G928F                              |           8 |
+| CAT3       | G960U                              |           8 |
+| CAT3       | G973U                              |           8 |
+| CAT3       | N960F DS                           |           8 |
+| CAT34      | Redmi Note 11 Pro                  |           8 |
+| CAT6       | Xperia XA Ultra                    |           8 |
+| CAT6       | XZ2 Premium                        |           8 |
+| CAT1       | iPhone 16 Plus                     |           7 |
+| CAT3       | A530F/DS                           |           7 |
+| CAT3       | G920F                              |           7 |
+| CAT3       | G950FD                             |           7 |
+| CAT3       | J510F                              |           7 |
+| CAT3       | S7710                              |           7 |
+| CAT38      | A53                                |           7 |
+| CAT5       | P Smart Z                          |           7 |
+| CAT2       | Pixel 9 Pro Fold                   |           6 |
+| CAT22      | 6T                                 |           6 |
+| CAT3       | A300F                              |           6 |
+| CAT3       | A310F                              |           6 |
+| CAT3       | G800F                              |           6 |
+| CAT3       | S908E                              |           6 |
+| CAT5       | Nova 5T                            |           6 |
+| CAT1       | A2604                              |           5 |
+| CAT1       | iPad Pro                           |           5 |
+| CAT1       | iPhone 5C                          |           5 |
+| CAT1       | Watch Series 5 Aluminium 44MM      |           5 |
+| CAT16      | TA1175/DS                          |           5 |
+| CAT24      | Q2 Plus                            |           5 |
+| CAT3       |                                    |           5 |
+| CAT3       | A225F/DS                           |           5 |
+| CAT3       | S918U                              |           5 |
+| CAT3       | SM-X115                            |           5 |
+| CAT3       | T976B                              |           5 |
+| CAT3       | X706B                              |           5 |
+| CAT32      | F5                                 |           5 |
+| CAT5       | Y6p                                |           5 |
+| CAT6       | Xperia Z                           |           5 |
+| CAT9       | G8s ThinQ                          |           5 |
+| CAT1       | A2461                              |           4 |
+| CAT1       | iPhone 16e                         |           4 |
+| CAT1       | iPhone 4                           |           4 |
+| CAT11      | Edge                               |           4 |
+| CAT12      | U12 Plus                           |           4 |
+| CAT2       | Pixel  4a                          |           4 |
+| CAT20      | Doro 8080                          |           4 |
+| CAT20      | Motorola One Zoom                  |           4 |
+| CAT22      | 6                                  |           4 |
+| CAT3       | G981F/DS                           |           4 |
+| CAT3       | G981U1                             |           4 |
+| CAT3       | G988U                              |           4 |
+| CAT3       | N970F                              |           4 |
+| CAT3       | S906E                              |           4 |
+| CAT3       | S908W                              |           4 |
+| CAT33      | Zenfone 5                          |           4 |
+| CAT38      | A15                                |           4 |
+| CAT45      | 90 Lite                            |           4 |
+| CAT5       | Honor 9                            |           4 |
+| CAT5       | P10                                |           4 |
+| CAT5       | Y6                                 |           4 |
+| CAT6       | Xperia E                           |           4 |
+| CAT6       | Xperia M2                          |           4 |
+| CAT6       | Xperia M5                          |           4 |
+| CAT6       | Xperia XA1 Plus                    |           4 |
+| CAT6       | Xperia Z1                          |           4 |
+| CAT1       | 5C                                 |           3 |
+| CAT11      | One Action                         |           3 |
+| CAT16      | G11                                |           3 |
+| CAT20      | Xiaomi Mi 9T Pro                   |           3 |
+| CAT22      | Nord                               |           3 |
+| CAT3       | A107F/DS                           |           3 |
+| CAT3       | G781U                              |           3 |
+| CAT3       | G950U                              |           3 |
+| CAT3       | G986U                              |           3 |
+| CAT3       | M205FN/DS                          |           3 |
+| CAT3       | N9750/DS                           |           3 |
+| CAT32      | F5 Pro                             |           3 |
+| CAT43      | Fairphone 5                        |           3 |
+| CAT5       | 10 Pro                             |           3 |
+| CAT6       | Xperia E3                          |           3 |
+| CAT6       | Xperia Z2                          |           3 |
+| CAT6       | Xperia Z3 plus                     |           3 |
+| CAT1       | iPad A2429                         |           2 |
+| CAT1       | iPad Pro 12.9                      |           2 |
+| CAT1       | iPad Pro 12.9 Inch 5th Gen         |           2 |
+| CAT1       | iPhone 3                           |           2 |
+| CAT1       | iPhone 4S                          |           2 |
+| CAT1       | iPhone SE 3                        |           2 |
+| CAT11      | Vision One                         |           2 |
+| CAT16      | 6.2                                |           2 |
+| CAT16      | 7.2                                |           2 |
+| CAT16      | G50                                |           2 |
+| CAT2       | Pixel 4 XL                         |           2 |
+| CAT20      | CAT S61                            |           2 |
+| CAT20      | Motorola Moto G7 Plus              |           2 |
+| CAT20      | Motorola Moto G8                   |           2 |
+| CAT20      | Motorola Moto G8 Plus              |           2 |
+| CAT20      | Motorola Vision One                |           2 |
+| CAT20      | Xiaomi Redmi Note 5 Pro            |           2 |
+| CAT23      | TCL T770H                          |           2 |
+| CAT3       | A025G/DS                           |           2 |
+| CAT3       | G7810/DS                           |           2 |
+| CAT3       | G970U                              |           2 |
+| CAT3       | G990E                              |           2 |
+| CAT3       | G991W                              |           2 |
+| CAT3       | G998N                              |           2 |
+| CAT3       | i9300                              |           2 |
+| CAT3       | iPhone 16 Pro                      |           2 |
+| CAT3       | J500F                              |           2 |
+| CAT3       | N950U                              |           2 |
+| CAT3       | N971N                              |           2 |
+| CAT3       | N986U                              |           2 |
+| CAT3       | S9010                              |           2 |
+| CAT3       | S908N                              |           2 |
+| CAT3       | S918W                              |           2 |
+| CAT3       | SM707B                             |           2 |
+| CAT34      | POCO F2 Pro                        |           2 |
+| CAT38      | A94                                |           2 |
+| CAT38      | Find X3 Lite                       |           2 |
+| CAT45      | 90                                 |           2 |
+| CAT5       | N9005                              |           2 |
+| CAT6       | Xperia E4                          |           2 |
+| CAT6       | Xperia Pro I                       |           2 |
+| CAT6       | Xperia X Performance               |           2 |
+| CAT6       | Xperia Z4 Tablet                   |           2 |
+| CAT1       | 5                                  |           1 |
+| CAT1       | A1891                              |           1 |
+| CAT1       | Apple iPad  2018 A 1954            |           1 |
+| CAT1       | i-Phone SE                         |           1 |
+| CAT1       | iPad 2                             |           1 |
+| CAT1       | iPad 4                             |           1 |
+| CAT1       | iPad A1455                         |           1 |
+| CAT1       | iPad A1550                         |           1 |
+| CAT1       | iPad A1567                         |           1 |
+| CAT1       | iPad A2123                         |           1 |
+| CAT1       | iPad Air                           |           1 |
+| CAT1       | iPad Air 2                         |           1 |
+| CAT1       | iPad Mini 4                        |           1 |
+| CAT1       | iPhone SE 3rd Gen                  |           1 |
+| CAT1       | MTH12B/A                           |           1 |
+| CAT1       | Xr                                 |           1 |
+| CAT1       | Y5                                 |           1 |
+| CAT11      | Edge 20 Lite                       |           1 |
+| CAT11      | Moto G5 Plus                       |           1 |
+| CAT11      | Razr 40 Ultra                      |           1 |
+| CAT12      | E3                                 |           1 |
+| CAT12      | One M9                             |           1 |
+| CAT12      | Wildfire E1                        |           1 |
+| CAT16      | 1 Plus                             |           1 |
+| CAT16      | 3                                  |           1 |
+| CAT16      | 5                                  |           1 |
+| CAT16      | 520                                |           1 |
+| CAT16      | 7 Plus                             |           1 |
+| CAT16      | 7.1                                |           1 |
+| CAT16      | 8 Sirocco                          |           1 |
+| CAT16      | 8.1                                |           1 |
+| CAT16      | 9 PureView                         |           1 |
+| CAT2       | G975U                              |           1 |
+| CAT2       | Google Pixel                       |           1 |
+| CAT2       | iPhone 13 Pro Max                  |           1 |
+| CAT2       | Pixel XL                           |           1 |
+| CAT2       | test                               |           1 |
+| CAT20      | BlackBerry Z10                     |           1 |
+| CAT20      | Blackview                          |           1 |
+| CAT20      | Blackview MAX 1                    |           1 |
+| CAT20      | Doro 5516                          |           1 |
+| CAT20      | DORO 6520                          |           1 |
+| CAT20      | Fairphone 3                        |           1 |
+| CAT20      | Moto G6                            |           1 |
+| CAT20      | Motorola One Macro                 |           1 |
+| CAT20      | S60                                |           1 |
+| CAT20      | Xiaomi Redmi Note 8 Pro            |           1 |
+| CAT20      | ZTE Axon 10 Pro                    |           1 |
+| CAT22      | 3T                                 |           1 |
+| CAT22      | 5                                  |           1 |
+| CAT22      | 8                                  |           1 |
+| CAT22      | 9 Pro                              |           1 |
+| CAT22      | Nord 2                             |           1 |
+| CAT23      | 1b                                 |           1 |
+| CAT23      | 1s                                 |           1 |
+| CAT3       | A035G/DS                           |           1 |
+| CAT3       | A305F/DS                           |           1 |
+| CAT3       | A346E/DS                           |           1 |
+| CAT3       | A505F/DS                           |           1 |
+| CAT3       | A536E/DS                           |           1 |
+| CAT3       | A546E                              |           1 |
+| CAT3       | A71F/DS                            |           1 |
+| CAT3       | F707B                              |           1 |
+| CAT3       | F721W                              |           1 |
+| CAT3       | G360F                              |           1 |
+| CAT3       | G715FN/DS                          |           1 |
+| CAT3       | G935U                              |           1 |
+| CAT3       | G9550                              |           1 |
+| CAT3       | G955U                              |           1 |
+| CAT3       | G955W                              |           1 |
+| CAT3       | G970U1                             |           1 |
+| CAT3       | G9750                              |           1 |
+| CAT3       | G981U                              |           1 |
+| CAT3       | G9880/DS                           |           1 |
+| CAT3       | G998O                              |           1 |
+| CAT3       | Green                              |           1 |
+| CAT3       | GT-I9506                           |           1 |
+| CAT3       | i9195                              |           1 |
+| CAT3       | J110H/DS                           |           1 |
+| CAT3       | J4 Plus                            |           1 |
+| CAT3       | J415FN/DS                          |           1 |
+| CAT3       | J500/DS                            |           1 |
+| CAT3       | J6+                                |           1 |
+| CAT3       | J730F D/S                          |           1 |
+| CAT3       | M205F/DS                           |           1 |
+| CAT3       | N950N                              |           1 |
+| CAT3       | N960N                              |           1 |
+| CAT3       | N970O                              |           1 |
+| CAT3       | N975U                              |           1 |
+| CAT3       | N981B                              |           1 |
+| CAT3       | N981U                              |           1 |
+| CAT3       | P619                               |           1 |
+| CAT3       | S6310                              |           1 |
+| CAT3       | S901N                              |           1 |
+| CAT3       | S901US                             |           1 |
+| CAT3       | S906W                              |           1 |
+| CAT3       | S916U                              |           1 |
+| CAT3       | S9180                              |           1 |
+| CAT3       | S918B                              |           1 |
+| CAT3       | S918N                              |           1 |
+| CAT3       | S918O                              |           1 |
+| CAT3       | X906B                              |           1 |
+| CAT34      | 11T                                |           1 |
+| CAT34      | Redmi Note 9 Pro                   |           1 |
+| CAT38      | A54                                |           1 |
+| CAT38      | A54S                               |           1 |
+| CAT39      | Nothing Phone 1                    |           1 |
+| CAT41      | S42                                |           1 |
+| CAT45      | Honor 50                           |           1 |
+| CAT45      | iPhone 13                          |           1 |
+| CAT45      | iPhone 14                          |           1 |
+| CAT45      | Magic Pro                          |           1 |
+| CAT45      | S908U                              |           1 |
+| CAT5       | G935F                              |           1 |
+| CAT5       | Honor 20 Pro                       |           1 |
+| CAT5       | Honor 8                            |           1 |
+| CAT5       | Honor 8X/DS                        |           1 |
+| CAT5       | Honor Magic4 Pro                   |           1 |
+| CAT5       | Mate 9                             |           1 |
+| CAT5       | P Smart Pro                        |           1 |
+| CAT5       | Y5 2019                            |           1 |
+| CAT5       | Y6 Pro                             |           1 |
+| CAT5       | Y7                                 |           1 |
+| CAT6       |                                    |           1 |
+| CAT6       | Ericsson LT26i                     |           1 |
+| CAT6       | Z1 Compact                         |           1 |
+| CAT9       | G4                                 |           1 |
+| CAT9       | G7                                 |           1 |
+| CAT9       | Nexus 5X                           |           1 |
+| CAT9       | V30                                |           1 |
++------------+------------------------------------+-------------+
+617 rows in set (0.913 sec)
+
+MariaDB [s4d_england_db]> 
+MariaDB [s4d_england_db]> SELECT
+    ->   so.item_brand,
+    ->   so.item_details,
+    ->   COUNT(*) AS usage_count
+    -> FROM tbl_imei_sales_orders so
+    -> GROUP BY so.item_brand, so.item_details
+    -> ORDER BY usage_count DESC, so.item_brand, so.item_details;
++------------+------------------------------------+-------------+
+| item_brand | item_details                       | usage_count |
++------------+------------------------------------+-------------+
+| CAT1       | iPhone 11                          |       10363 |
+| CAT3       | S908B/DS                           |        7449 |
+| CAT3       | S918B/DS                           |        6804 |
+| CAT3       | G981B/DS                           |        6481 |
+| CAT3       | S938B/DS                           |        5825 |
+| CAT3       | S928B/DS                           |        5765 |
+| CAT1       | iPhone SE 2                        |        5586 |
+| CAT1       | iPhone 13                          |        5045 |
+| CAT3       | S901B/DS                           |        4921 |
+| CAT1       | iPhone 8                           |        4396 |
+| CAT1       | iPhone X                           |        4381 |
+| CAT3       | A127F/DS                           |        4209 |
+| CAT3       | G998B/DS                           |        4177 |
+| CAT3       | A146P/DS                           |        4166 |
+| CAT1       | iPhone 12                          |        3722 |
+| CAT3       | S921B/DS                           |        3579 |
+| CAT1       | iPhone 14                          |        3543 |
+| CAT1       | iPhone 12 Pro                      |        3361 |
+| CAT3       | G973F/DS                           |        3110 |
+| CAT3       | F721B                              |        3076 |
+| CAT3       | F731B                              |        2978 |
+| CAT3       | A145R/DS                           |        2960 |
+| CAT3       | A566B/DS                           |        2913 |
+| CAT1       | iPhone 12 Mini                     |        2791 |
+| CAT1       | iPhone 14 Plus                     |        2790 |
+| CAT3       | S911B/DS                           |        2739 |
+| CAT1       | iPhone 11 Pro                      |        2677 |
+| CAT3       | A137F/DS                           |        2594 |
+| CAT1       | iPhone SE 2022                     |        2550 |
+| CAT1       | iPhone XS                          |        2375 |
+| CAT3       | S931B/DS                           |        2334 |
+| CAT3       | F946B/DS                           |        2280 |
+| CAT3       | S926B/DS                           |        2182 |
+| CAT3       | G991B/DS                           |        2159 |
+| CAT3       | A556B/DS                           |        2145 |
+| CAT3       | S721B/DS                           |        1984 |
+| CAT3       | F741B                              |        1955 |
+| CAT1       | iPhone XR                          |        1905 |
+| CAT3       | G975F/DS                           |        1801 |
+| CAT3       | N986B/DS                           |        1728 |
+| CAT3       | G988B/DS                           |        1615 |
+| CAT3       | A546B/DS                           |        1573 |
+| CAT3       | F956B/DS                           |        1564 |
+| CAT6       | Xperia L3                          |        1525 |
+| CAT1       | iPhone 17 Pro Max                  |        1507 |
+| CAT1       | iPhone 13 Pro                      |        1496 |
+| CAT6       | Xperia 5                           |        1448 |
+| CAT6       | Xperia 10                          |        1382 |
+| CAT3       | A536B/DS                           |        1357 |
+| CAT3       | A346B/DS                           |        1295 |
+| CAT3       | F936B/DS                           |        1271 |
+| CAT3       | G986B/DS                           |        1267 |
+| CAT1       | iPhone 12 Pro Max                  |        1238 |
+| CAT3       | A326B/DS                           |        1229 |
+| CAT3       | S711B/DS                           |        1227 |
+| CAT1       | iPhone 13 Pro Max                  |        1190 |
+| CAT1       | iPhone 13 Mini                     |        1163 |
+| CAT1       | iPhone 14 Pro                      |        1145 |
+| CAT3       | G950F                              |        1141 |
+| CAT3       | G960F                              |        1112 |
+| CAT2       | Pixel 7a                           |        1104 |
+| CAT3       | F966B/DS                           |        1081 |
+| CAT3       | A528B/DS                           |        1069 |
+| CAT3       | F766B                              |         983 |
+| CAT3       | A156B/DS                           |         977 |
+| CAT6       | Xperia 1 V                         |         971 |
+| CAT3       | A155F/DS                           |         915 |
+| CAT1       | iPhone 7                           |         904 |
+| CAT3       | G780G/DS                           |         904 |
+| CAT3       | G935F                              |         883 |
+| CAT3       | G996B/DS                           |         854 |
+| CAT3       | A176B/DS                           |         852 |
+| CAT1       | iPhone 11 Pro Max                  |         819 |
+| CAT6       | Xperia 1                           |         818 |
+| CAT3       | A135F/DS                           |         809 |
+| CAT3       | S906B/DS                           |         753 |
+| CAT6       | Xperia XZ3                         |         736 |
+| CAT3       | SM-T515                            |         723 |
+| CAT6       | Xperia XA2                         |         712 |
+| CAT3       | G781B/DS                           |         707 |
+| CAT3       | G990B2/DS                          |         707 |
+| CAT6       | Xperia 5 III                       |         687 |
+| CAT6       | Xperia 10 V                        |         682 |
+| CAT3       | G990B/DS                           |         681 |
+| CAT3       | S916B/DS                           |         674 |
+| CAT3       | A236B/DS                           |         662 |
+| CAT3       | F711B                              |         655 |
+| CAT6       | Xperia 10 III                      |         637 |
+| CAT6       | Xperia XZ2                         |         629 |
+| CAT1       | iPhone 8 Plus                      |         628 |
+| CAT1       | iPhone 15 Pro                      |         624 |
+| CAT3       | S936B/DS                           |         622 |
+| CAT3       | A515F/DS                           |         615 |
+| CAT3       | A165F/DS                           |         577 |
+| CAT3       | G955F                              |         575 |
+| CAT3       | A166B/DS                           |         546 |
+| CAT6       | Xperia 1 IV                        |         544 |
+| CAT3       | A366B/DS                           |         542 |
+| CAT1       | iPhone SE 3rd Gen                  |         541 |
+| CAT3       | G980F/DS                           |         536 |
+| CAT3       | A336B/DS                           |         529 |
+| CAT3       | N976B                              |         517 |
+| CAT3       | F926B/DS                           |         498 |
+| CAT3       | S948B/DS                           |         497 |
+| CAT3       | G780F/DS                           |         482 |
+| CAT5       | P30 Pro                            |         482 |
+| CAT6       | Xperia 10 II                       |         473 |
+| CAT6       | Xperia 1 III                       |         472 |
+| CAT6       | Xperia 10 IV                       |         468 |
+| CAT5       | P30 Lite                           |         464 |
+| CAT3       | A226B/DS                           |         459 |
+| CAT3       | A256B/DS                           |         459 |
+| CAT3       | A156E/DS                           |         450 |
+| CAT3       | S731B/DS                           |         449 |
+| CAT6       | Xperia 5 IV                        |         435 |
+| CAT1       | iPhone XS Max                      |         422 |
+| CAT1       | iPhone 17 Pro                      |         420 |
+| CAT3       | A202F/DS                           |         401 |
+| CAT6       | Xperia 10 VI                       |         397 |
+| CAT6       | Xperia 5 II                        |         393 |
+| CAT3       | F761B                              |         377 |
+| CAT1       | iPad Pro 10.5 4G GSM               |         376 |
+| CAT6       | Xperia 1 II                        |         373 |
+| CAT6       | Xperia 1 VI                        |         368 |
+| CAT3       | SM-A805F/DS                        |         360 |
+| CAT3       | A356B/DS                           |         356 |
+| CAT6       | Xperia L 4                         |         352 |
+| CAT3       | A125F/DS                           |         339 |
+| CAT5       | P20 Pro                            |         320 |
+| CAT3       | A057G/DS                           |         313 |
+| CAT3       | G525F/DS                           |         300 |
+| CAT6       | XZ Premium                         |         299 |
+| CAT1       | iPhone 16 Pro Max                  |         288 |
+| CAT5       | P30 PRO/DS                         |         283 |
+| CAT3       | A175F/DS                           |         280 |
+| CAT3       | G965F                              |         280 |
+| CAT1       | iPhone 15 Pro Max                  |         273 |
+| CAT3       | A725F/DS                           |         269 |
+| CAT3       | N970F/DS                           |         260 |
+| CAT3       | A505FN/DS                          |         253 |
+| CAT2       | Pixel 7                            |         247 |
+| CAT3       | A715F/DS                           |         243 |
+| CAT3       | S937B/DS                           |         242 |
+| CAT2       | Pixel 10                           |         240 |
+| CAT6       | Xperia 5 V                         |         238 |
+| CAT6       | Xperia XA1                         |         231 |
+| CAT1       | iPhone 14 Pro Max                  |         225 |
+| CAT3       | G960F/DS                           |         219 |
+| CAT3       | S942B/DS                           |         217 |
+| CAT3       | G977B                              |         212 |
+| CAT6       | Xperia L1                          |         212 |
+| CAT3       | G930F                              |         210 |
+| CAT3       | N975F/DS                           |         210 |
+| CAT1       | iPad  2018 A 1954                  |         209 |
+| CAT3       | N770F/DS                           |         199 |
+| CAT6       | Xperia XZ1 Compact                 |         191 |
+| CAT6       | Xperia XZ                          |         181 |
+| CAT1       | iPad 10.2 Cellular                 |         170 |
+| CAT3       | A415F DS                           |         170 |
+| CAT3       | SMT505                             |         160 |
+| CAT1       | iPhone SE2                         |         153 |
+| CAT2       | Pixel 8A                           |         153 |
+| CAT6       | Xperia XZ1                         |         150 |
+| CAT1       | A2072                              |         149 |
+| CAT34      | Poco X3 Pro                        |         140 |
+| CAT2       | Pixel 6A                           |         137 |
+| CAT3       | N950F                              |         136 |
+| CAT3       | S931B                              |         133 |
+| CAT5       | Mate 20 pro                        |         132 |
+| CAT2       | Pixel 7 Pro                        |         130 |
+| CAT5       | P40 Lite                           |         130 |
+| CAT1       | iPhone 7 Plus                      |         129 |
+| CAT3       | A047F/DS                           |         126 |
+| CAT3       | S947B/DS                           |         112 |
+| CAT3       | A908B                              |         106 |
+| CAT3       | A136B/DS                           |         105 |
+| CAT1       | iPad A1823                         |         102 |
+| CAT3       | A705FN/DS                          |         101 |
+| CAT23      | 5033XR                             |         100 |
+| CAT5       | Huawei MediaPad T3 10              |         100 |
+| CAT3       | SM-G525F/DS                        |          94 |
+| CAT2       | Pixel 6                            |          91 |
+| CAT3       | G970F/DS                           |          91 |
+| CAT35      | P60 Pro                            |          90 |
+| CAT5       | P30 /DS                            |          90 |
+| CAT2       | Pixel 6 Pro                        |          88 |
+| CAT3       | G965F/DS                           |          87 |
+| CAT1       | iPhone SE                          |          86 |
+| CAT1       | iPad Pro 11                        |          83 |
+| CAT3       | A526B/DS                           |          82 |
+| CAT16      | Nokia 5.1                          |          79 |
+| CAT1       | iPhone 15                          |          74 |
+| CAT3       | A266B/DS                           |          72 |
+| CAT3       | G985F/DS                           |          71 |
+| CAT3       | N960F                              |          71 |
+| CAT6       | Xperia X                           |          70 |
+| CAT3       | A426B/DS                           |          60 |
+| CAT2       | Pixel 8 Pro                        |          58 |
+| CAT3       | N981B/DS                           |          58 |
+| CAT3       | N950F/DS                           |          56 |
+| CAT6       | Xperia X Compact                   |          51 |
+| CAT3       | A105FN/DS                          |          50 |
+| CAT5       | Mate 20 Lite                       |          50 |
+| CAT5       | Mate 20 X                          |          50 |
+| CAT6       | Xperia XA                          |          49 |
+| CAT3       | A217F/DS                           |          48 |
+| CAT6       | Xperia E1                          |          42 |
+| CAT3       | G975F                              |          41 |
+| CAT3       | A515F DS                           |          40 |
+| CAT34      | Poco F3                            |          40 |
+| CAT34      | Poco M4 Pro 5G                     |          40 |
+| CAT2       | Pixel 8                            |          39 |
+| CAT1       | iPad Pro 12.9 (1st Gen)  Wifi + 4G |          37 |
+| CAT1       | iPhone 6                           |          37 |
+| CAT3       | G770F/DS                           |          37 |
+| CAT1       | iPhone 6S                          |          36 |
+| CAT3       | Galaxy Fold 5G F907F               |          36 |
+| CAT2       | Pixel 9                            |          35 |
+| CAT34      | Poco M3 Pro 5G                     |          35 |
+| CAT5       | P20 Lite                           |          35 |
+| CAT3       | G925F                              |          34 |
+| CAT3       | G908B/DS                           |          33 |
+| CAT6       | Xperia E5                          |          33 |
+| CAT1       | iPhone 16 Pro                      |          31 |
+| CAT2       | Pixel 4a                           |          31 |
+| CAT3       | SMT875                             |          30 |
+| CAT3       | Tab S5e                            |          30 |
+| CAT5       | P30 Lite/DS                        |          30 |
+| CAT6       | Xperia Z5 Compact                  |          30 |
+| CAT1       | iPhone 15 Plus                     |          29 |
+| CAT6       | Xperia Z5                          |          28 |
+| CAT3       | G998U                              |          27 |
+| CAT1       | iPhone 16                          |          26 |
+| CAT22      | 8 Pro                              |          25 |
+| CAT5       | Mediapad T5                        |          25 |
+| CAT5       | P smart+ 2019                      |          25 |
+| CAT1       | iPad Pro 9.7 MLQ32LL/A             |          24 |
+| CAT2       | Pixel 10a                          |          24 |
+| CAT3       | G955F/DS                           |          24 |
+| CAT3       | A520F                              |          23 |
+| CAT5       | P40                                |          23 |
+| CAT2       | Pixel 4                            |          21 |
+| CAT1       | iPhone Air                         |          20 |
+| CAT2       | Pixel Fold 5G                      |          20 |
+| CAT3       | A215F/DS                           |          20 |
+| CAT3       | A325F/DS                           |          20 |
+| CAT3       | R875F                              |          20 |
+| CAT3       | X216R                              |          20 |
+| CAT6       | Xperia 10 Plus                     |          19 |
+| CAT6       | Xperia Z3                          |          19 |
+| CAT3       | G973F                              |          18 |
+| CAT3       | N960F DS                           |          18 |
+| CAT1       | MTGN2B/A                           |          17 |
+| CAT2       | Pixel 9 Pro XL                     |          16 |
+| CAT23      | 2038X                              |          16 |
+| CAT1       | iPhone 5S                          |          15 |
+| CAT3       | A920F                              |          15 |
+| CAT3       | N980F/DS                           |          15 |
+| CAT3       | X716B                              |          15 |
+| CAT6       | Xperia L2                          |          14 |
+| CAT6       | Xperia M4                          |          14 |
+| CAT1       | iPad Air 4th Gen                   |          13 |
+| CAT2       | Pixel 3 XL                         |          12 |
+| CAT2       | Pixel 9a                           |          12 |
+| CAT3       | N960F/DS                           |          12 |
+| CAT5       | P40 Pro                            |          12 |
+| CAT16      | G21                                |          11 |
+| CAT3       | G991U                              |          11 |
+| CAT1       | iPhone 17                          |          10 |
+| CAT2       | Pixel 9 Pro                        |          10 |
+| CAT3       | A225F/DS                           |          10 |
+| CAT3       | F916B                              |          10 |
+| CAT3       | R885F                              |          10 |
+| CAT3       | R895F                              |          10 |
+| CAT3       | SM-T725                            |          10 |
+| CAT3       | SMT225                             |          10 |
+| CAT5       | Honor 8X                           |          10 |
+| CAT18      | 5G Home Broadband Hub              |           9 |
+| CAT3       | A525F/DS                           |           9 |
+| CAT3       | G975U                              |           9 |
+| CAT3       | N985F/DS                           |           9 |
+| CAT6       | Xperia L4                          |           9 |
+| CAT6       | Xperia Z3 Compact                  |           9 |
+| CAT1       | iPhone 6S Plus                     |           8 |
+| CAT3       | A515F/DSN                          |           8 |
+| CAT6       | Xperia XA Ultra                    |           8 |
+| CAT6       | Xperia Z5 Premium                  |           8 |
+| CAT6       | XZ2 Premium                        |           8 |
+| CAT1       | iPhone 16 Plus                     |           7 |
+| CAT1       | iPhone 5                           |           7 |
+| CAT1       | iPhone 6 Plus                      |           7 |
+| CAT3       | G973U                              |           7 |
+| CAT3       | S936B                              |           7 |
+| CAT6       | Xperia XA1 Ultra                   |           7 |
+| CAT2       | Pixel 9 Pro Fold                   |           6 |
+| CAT3       | A415F/DS                           |           6 |
+| CAT3       | Pixel 9 Pro                        |           6 |
+| CAT1       | A2604                              |           5 |
+| CAT16      | TA1175/DS                          |           5 |
+| CAT3       | G928F                              |           5 |
+| CAT3       | SM-X115                            |           5 |
+| CAT3       | T976B                              |           5 |
+| CAT3       | X706B                              |           5 |
+| CAT6       | Xperia XZ2 Compact                 |           5 |
+| CAT1       | A2461                              |           4 |
+| CAT1       | iPhone 16e                         |           4 |
+| CAT3       | N970F                              |           4 |
+| CAT45      | 90 Lite                            |           4 |
+| CAT6       | Xperia XA1 Plus                    |           4 |
+| CAT1       | iPad Pro 2nd Gen 12.9 Inch         |           3 |
+| CAT1       | iPhone 5c                          |           3 |
+| CAT3       | S906U                              |           3 |
+| CAT3       | S908U                              |           3 |
+| CAT43      | Fairphone 5                        |           3 |
+| CAT6       | Xperia M5                          |           3 |
+| CAT6       | Xperia Z1                          |           3 |
+| CAT6       | Xperia Z3 plus                     |           3 |
+| CAT1       | iPad A2429                         |           2 |
+| CAT1       | iPad Pro 12.9 Inch 5th Gen         |           2 |
+| CAT1       | iPhone SE 3                        |           2 |
+| CAT16      | G11                                |           2 |
+| CAT2       | Pixel 3                            |           2 |
+| CAT2       | Pixel 3a                           |           2 |
+| CAT3       | A310F                              |           2 |
+| CAT3       | G981U1                             |           2 |
+| CAT3       | G990E                              |           2 |
+| CAT3       | iPhone 16 Pro                      |           2 |
+| CAT3       | N971N                              |           2 |
+| CAT3       | N986O/DS                           |           2 |
+| CAT3       | S901U                              |           2 |
+| CAT3       | S906E                              |           2 |
+| CAT3       | S911U                              |           2 |
+| CAT45      | 90                                 |           2 |
+| CAT5       | P30                                |           2 |
+| CAT5       | P30 Pro /DS                        |           2 |
+| CAT6       | Xperia E                           |           2 |
+| CAT6       | Xperia Pro I                       |           2 |
+| CAT6       | Xperia X Performance               |           2 |
+| CAT6       | Xperia Z                           |           2 |
+| CAT1       | 5C                                 |           1 |
+| CAT1       | iPad A1455                         |           1 |
+| CAT1       | iPad A1550                         |           1 |
+| CAT1       | iPad A1567                         |           1 |
+| CAT1       | iPad A2123                         |           1 |
+| CAT1       | iPad Air                           |           1 |
+| CAT1       | iPad Air 2                         |           1 |
+| CAT1       | iPad Pro 12.9                      |           1 |
+| CAT1       | MTH12B/A                           |           1 |
+| CAT11      | Edge 20 Lite                       |           1 |
+| CAT11      | Razr 40 Ultra                      |           1 |
+| CAT12      | One M9                             |           1 |
+| CAT16      | 1 Plus                             |           1 |
+| CAT2       | G975U                              |           1 |
+| CAT2       | Pixel 2 XL                         |           1 |
+| CAT2       | Pixel 3a XL                        |           1 |
+| CAT2       | Pixel 4 XL                         |           1 |
+| CAT2       | S918B                              |           1 |
+| CAT20      | Doro 5516                          |           1 |
+| CAT20      | DORO 6520                          |           1 |
+| CAT22      | 9 Pro                              |           1 |
+| CAT23      | 1b                                 |           1 |
+| CAT23      | 1s                                 |           1 |
+| CAT3       | A035G/DS                           |           1 |
+| CAT3       | A536E/DS                           |           1 |
+| CAT3       | A71F/DS                            |           1 |
+| CAT3       | F707B                              |           1 |
+| CAT3       | G781U                              |           1 |
+| CAT3       | G970U                              |           1 |
+| CAT3       | G970U1                             |           1 |
+| CAT3       | G9750                              |           1 |
+| CAT3       | G981F/DS                           |           1 |
+| CAT3       | G981U                              |           1 |
+| CAT3       | G988U                              |           1 |
+| CAT3       | G998N                              |           1 |
+| CAT3       | G998O                              |           1 |
+| CAT3       | Galaxy A9                          |           1 |
+| CAT3       | N986U                              |           1 |
+| CAT3       | P619                               |           1 |
+| CAT3       | S9010                              |           1 |
+| CAT3       | S901US                             |           1 |
+| CAT3       | S908E                              |           1 |
+| CAT3       | S908E/DS                           |           1 |
+| CAT3       | S918W                              |           1 |
+| CAT3       | samsung                            |           1 |
+| CAT3       | X906B                              |           1 |
+| CAT38      | A54                                |           1 |
+| CAT41      | S42                                |           1 |
+| CAT45      | Honor 50                           |           1 |
+| CAT45      | iPhone 13                          |           1 |
+| CAT45      | iPhone 14                          |           1 |
+| CAT45      | Magic Pro                          |           1 |
+| CAT45      | S908U                              |           1 |
+| CAT5       | P30Pro                             |           1 |
+| CAT5       | P8 Lite                            |           1 |
+| CAT6       | Xperia E3                          |           1 |
+| CAT6       | Xperia E4                          |           1 |
+| CAT6       | Xperia M2                          |           1 |
+| CAT6       | Xperia XA2 Ultra                   |           1 |
+| CAT6       | Xperia Z2                          |           1 |
+| CAT9       | Nexus 5X                           |           1 |
++------------+------------------------------------+-------------+
+400 rows in set (0.111 sec)
+
+MariaDB [s4d_england_db]> 
+MariaDB [s4d_england_db]> -- 11. Distinct scoped CATxx/details pairs for audit
+MariaDB [s4d_england_db]> SELECT
+    ->   src.item_brand,
+    ->   src.item_details,
+    ->   SUM(src.usage_count) AS usage_count
+    -> FROM (
+    ->   SELECT t.item_brand, t.item_details, COUNT(*) AS usage_count
+    ->   FROM tbl_imei i
+    ->   JOIN tbl_tac t
+    ->     ON t.item_tac = i.item_tac
+    ->   GROUP BY t.item_brand, t.item_details
+    -> 
+    ->   UNION ALL
+    -> 
+    ->   SELECT so.item_brand, so.item_details, COUNT(*) AS usage_count
+    ->   FROM tbl_imei_sales_orders so
+    ->   GROUP BY so.item_brand, so.item_details
+    -> ) src
+    -> GROUP BY src.item_brand, src.item_details
+    -> ORDER BY usage_count DESC, src.item_brand, src.item_details;
++------------+------------------------------------+-------------+
+| item_brand | item_details                       | usage_count |
++------------+------------------------------------+-------------+
+| CAT1       | iPhone 11                          |       23826 |
+| CAT3       | S908B/DS                           |       15072 |
+| CAT1       | iPhone 8                           |       14580 |
+| CAT3       | S918B/DS                           |       14117 |
+| CAT3       | G981B/DS                           |       12906 |
+| CAT1       | iPhone X                           |       12723 |
+| CAT3       | S928B/DS                           |       11744 |
+| CAT3       | S938B/DS                           |       11659 |
+| CAT1       | iPhone SE 2                        |       11482 |
+| CAT3       | S901B/DS                           |       10428 |
+| CAT1       | iPhone 13                          |       10079 |
+| CAT3       | G998B/DS                           |        8584 |
+| CAT1       | iPhone 12                          |        8346 |
+| CAT3       | A146P/DS                           |        8313 |
+| CAT3       | G973F/DS                           |        8168 |
+| CAT3       | A127F/DS                           |        7736 |
+| CAT3       | S921B/DS                           |        7205 |
+| CAT1       | iPhone 14                          |        7088 |
+| CAT1       | iPhone 12 Pro                      |        7039 |
+| CAT1       | iPhone XS                          |        7001 |
+| CAT3       | G975F/DS                           |        6999 |
+| CAT3       | G950F                              |        6602 |
+| CAT3       | F721B                              |        6207 |
+| CAT1       | iPhone 7                           |        6019 |
+| CAT1       | iPhone 11 Pro                      |        5984 |
+| CAT3       | F731B                              |        5924 |
+| CAT1       | iPhone XR                          |        5919 |
+| CAT3       | A145R/DS                           |        5901 |
+| CAT3       | S911B/DS                           |        5872 |
+| CAT3       | A566B/DS                           |        5805 |
+| CAT1       | iPhone 12 Mini                     |        5699 |
+| CAT1       | iPhone 14 Plus                     |        5697 |
+| CAT1       | iPhone SE 2022                     |        5640 |
+| CAT3       | A137F/DS                           |        5288 |
+| CAT3       | S931B/DS                           |        4818 |
+| CAT3       | G991B/DS                           |        4701 |
+| CAT3       | F946B/DS                           |        4563 |
+| CAT3       | S926B/DS                           |        4345 |
+| CAT3       | A556B/DS                           |        4284 |
+| CAT3       | G960F                              |        4004 |
+| CAT3       | S721B/DS                           |        3969 |
+| CAT3       | F741B                              |        3913 |
+| CAT3       | G935F                              |        3803 |
+| CAT3       | N986B/DS                           |        3437 |
+| CAT3       | G988B/DS                           |        3405 |
+| CAT3       | G955F                              |        3399 |
+| CAT3       | F956B/DS                           |        3131 |
+| CAT3       | A546B/DS                           |        3105 |
+| CAT6       | Xperia L3                          |        3028 |
+| CAT1       | iPhone 17 Pro Max                  |        3018 |
+| CAT1       | iPhone 13 Pro                      |        2981 |
+| CAT6       | Xperia 5                           |        2892 |
+| CAT1       | iPhone 12 Pro Max                  |        2761 |
+| CAT6       | Xperia 10                          |        2718 |
+| CAT3       | A536B/DS                           |        2667 |
+| CAT3       | A346B/DS                           |        2550 |
+| CAT3       | F936B/DS                           |        2547 |
+| CAT1       | iPhone 8 Plus                      |        2531 |
+| CAT1       | iPhone 13 Pro Max                  |        2516 |
+| CAT3       | G986B/DS                           |        2514 |
+| CAT3       | S711B/DS                           |        2460 |
+| CAT3       | A326B/DS                           |        2447 |
+| CAT1       | iPhone 14 Pro                      |        2290 |
+| CAT1       | iPhone 13 Mini                     |        2287 |
+| CAT2       | Pixel 7a                           |        2208 |
+| CAT3       | F966B/DS                           |        2166 |
+| CAT6       | Xperia XA2                         |        2087 |
+| CAT6       | Xperia XZ3                         |        2077 |
+| CAT3       | A528B/DS                           |        2071 |
+| CAT3       | G965F                              |        2056 |
+| CAT3       | F766B                              |        1980 |
+| CAT3       | A156B/DS                           |        1954 |
+| CAT6       | Xperia 1 V                         |        1934 |
+| CAT6       | Xperia XZ2                         |        1924 |
+| CAT1       | iPhone 11 Pro Max                  |        1914 |
+| CAT3       | A155F/DS                           |        1830 |
+| CAT3       | G996B/DS                           |        1812 |
+| CAT3       | G780G/DS                           |        1762 |
+| CAT16      | Nokia 7.1                          |        1760 |
+| CAT3       | A176B/DS                           |        1704 |
+| CAT6       | Xperia 1                           |        1692 |
+| CAT3       | SM-T515                            |        1640 |
+| CAT6       | Xperia L1                          |        1635 |
+| CAT3       | A135F/DS                           |        1619 |
+| CAT3       | S906B/DS                           |        1588 |
+| CAT3       | G781B/DS                           |        1493 |
+| CAT3       | G990B2/DS                          |        1485 |
+| CAT1       | iPhone XS Max                      |        1436 |
+| CAT3       | S916B/DS                           |        1428 |
+| CAT3       | A515F/DS                           |        1399 |
+| CAT3       | G990B/DS                           |        1391 |
+| CAT6       | Xperia 10 V                        |        1366 |
+| CAT6       | Xperia 5 III                       |        1361 |
+| CAT3       | A236B/DS                           |        1315 |
+| CAT3       | N976B                              |        1275 |
+| CAT3       | F711B                              |        1273 |
+| CAT6       | Xperia 10 III                      |        1271 |
+| CAT3       | S936B/DS                           |        1261 |
+| CAT5       | P20 Lite                           |        1230 |
+| CAT1       | iPhone 15 Pro                      |        1219 |
+| CAT3       | G980F/DS                           |        1177 |
+| CAT5       | P30 Pro/DS                         |        1153 |
+| CAT3       | A165F/DS                           |        1124 |
+| CAT3       | A366B/DS                           |        1099 |
+| CAT3       | A505FN/DS                          |        1096 |
+| CAT3       | A166B/DS                           |        1091 |
+| CAT3       | A336B/DS                           |        1086 |
+| CAT6       | Xperia 1 IV                        |        1080 |
+| CAT5       | Mate 20 Pro                        |        1030 |
+| CAT3       | F926B/DS                           |        1029 |
+| CAT3       | G960F/DS                           |        1019 |
+| CAT3       | S948B/DS                           |        1004 |
+| CAT3       | G780F/DS                           |        1000 |
+| CAT3       | A125F/DS                           |         998 |
+| CAT5       | P30 Lite                           |         980 |
+| CAT5       | P20 Pro                            |         977 |
+| CAT3       | S731B/DS                           |         948 |
+| CAT6       | Xperia 10 II                       |         946 |
+| CAT6       | Xperia 10 IV                       |         930 |
+| CAT6       | Xperia 1 III                       |         927 |
+| CAT3       | A226B/DS                           |         922 |
+| CAT3       | G930F                              |         922 |
+| CAT3       | A156E/DS                           |         900 |
+| CAT6       | Xperia XZ1 Compact                 |         899 |
+| CAT3       | A256B/DS                           |         893 |
+| CAT3       | A202F/DS                           |         885 |
+| CAT5       | P30 Pro                            |         882 |
+| CAT1       | iPhone 17 Pro                      |         843 |
+| CAT3       | A705FN/DS                          |         829 |
+| CAT1       | iPad Pro 10.5 4G GSM               |         823 |
+| CAT3       | SM-A805F/DS                        |         811 |
+| CAT6       | Xperia 5 IV                        |         805 |
+| CAT6       | Xperia 5 II                        |         785 |
+| CAT6       | Xperia XA1                         |         759 |
+| CAT3       | G965F/DS                           |         758 |
+| CAT3       | F761B                              |         754 |
+| CAT6       | Xperia 10 VI                       |         753 |
+| CAT6       | XZ Premium                         |         747 |
+| CAT6       | Xperia 1 VI                        |         743 |
+| CAT6       | Xperia L 4                         |         713 |
+| CAT3       | A356B/DS                           |         712 |
+| CAT6       | Xperia 1 II                        |         704 |
+| CAT1       | iPhone 16 Pro Max                  |         629 |
+| CAT3       | A057G/DS                           |         626 |
+| CAT3       | G525F/DS                           |         600 |
+| CAT3       | N975F/DS                           |         596 |
+| CAT3       | N960F/DS                           |         592 |
+| CAT3       | N950F                              |         570 |
+| CAT3       | A175F/DS                           |         560 |
+| CAT3       | N970F/DS                           |         549 |
+| CAT1       | iPhone 7 Plus                      |         543 |
+| CAT1       | iPhone SE 3rd Gen                  |         542 |
+| CAT1       | iPhone 15 Pro Max                  |         537 |
+| CAT3       | G977B                              |         537 |
+| CAT3       | A725F/DS                           |         521 |
+| CAT23      | A3 Plus                            |         513 |
+| CAT3       | A715F/DS                           |         511 |
+| CAT2       | Pixel 7                            |         495 |
+| CAT3       | G970F/DS                           |         485 |
+| CAT2       | Pixel 10                           |         480 |
+| CAT3       | S937B/DS                           |         479 |
+| CAT6       | Xperia 5 V                         |         477 |
+| CAT1       | iPad  2018 A 1954                  |         472 |
+| CAT16      | Nokia 5.1                          |         466 |
+| CAT1       | iPhone 14 Pro Max                  |         441 |
+| CAT3       | S942B/DS                           |         437 |
+| CAT6       | Xperia XZ1                         |         437 |
+| CAT6       | Xperia L2                          |         431 |
+| CAT6       | Xperia XA1 Ultra                   |         411 |
+| CAT3       | N770F/DS                           |         405 |
+| CAT6       | Xperia XZ2 Compact                 |         400 |
+| CAT6       | Xperia XZ                          |         385 |
+| CAT3       | A920F                              |         365 |
+| CAT24      | Q2                                 |         359 |
+| CAT1       | iPad 10.2 Cellular                 |         340 |
+| CAT1       | iPhone SE2                         |         338 |
+| CAT3       | SMT505                             |         320 |
+| CAT5       | P20                                |         309 |
+| CAT2       | Pixel 8A                           |         306 |
+| CAT1       | iPad A1823                         |         304 |
+| CAT1       | A2072                              |         292 |
+| CAT34      | Poco X3 Pro                        |         280 |
+| CAT2       | Pixel 6a                           |         276 |
+| CAT5       | P40 Lite                           |         275 |
+| CAT1       | iPhone 6S                          |         274 |
+| CAT2       | Pixel 7 Pro                        |         264 |
+| CAT3       | N950F/DS                           |         261 |
+| CAT3       | A047F/DS                           |         259 |
+| CAT3       | A908B                              |         240 |
+| CAT3       | S947B/DS                           |         240 |
+| CAT5       | Mate 20Lite                        |         240 |
+| CAT1       | iPhone 6                           |         233 |
+| CAT1       | iPhone SE                          |         229 |
+| CAT3       | A415F/DS                           |         216 |
+| CAT5       | P30 /DS                            |         213 |
+| CAT3       | A136B/DS                           |         210 |
+| CAT3       | N960F                              |         210 |
+| CAT23      | 5033XR                             |         200 |
+| CAT5       | Huawei MediaPad T3 10              |         200 |
+| CAT3       | SM-G525F/DS                        |         192 |
+| CAT2       | Pixel 6                            |         187 |
+| CAT3       | A415F DS                           |         184 |
+| CAT35      | P60 Pro                            |         180 |
+| CAT2       | Pixel 6 Pro                        |         178 |
+| CAT1       | iPad Pro 11                        |         167 |
+| CAT3       | A105FN                             |         166 |
+| CAT3       | N981B/DS                           |         165 |
+| CAT6       | Xperia X                           |         161 |
+| CAT5       | P30                                |         159 |
+| CAT3       | G975F                              |         154 |
+| CAT1       | iPhone 15                          |         148 |
+| CAT3       | A520F                              |         148 |
+| CAT5       | P30 Lite/DS                        |         148 |
+| CAT3       | G985F/DS                           |         145 |
+| CAT3       | A266B/DS                           |         144 |
+| CAT3       | A526B/DS                           |         141 |
+| CAT1       | iPad Pro 12.9 (1st Gen)  Wifi + 4G |         137 |
+| CAT2       | Pixel 2 XL                         |         137 |
+| CAT3       | S931B                              |         133 |
+| CAT1       | iPad Pro 2nd Gen 12.9 Inch         |         132 |
+| CAT3       | A750FN                             |         131 |
+| CAT2       | Pixel 8 Pro                        |         126 |
+| CAT5       | Mate 10 Pro                        |         123 |
+| CAT3       | A426B/DS                           |         120 |
+| CAT3       | G998U                              |         115 |
+| CAT3       | A217F/DS                           |         112 |
+| CAT2       | Pixel 3 XL                         |         111 |
+| CAT3       | A105F/DS                           |         111 |
+| CAT6       | Xperia X Compact                   |         106 |
+| CAT6       | Xperia XA                          |         106 |
+| CAT5       | Mate 20 Lite                       |         103 |
+| CAT6       | Xperia E1                          |         103 |
+| CAT3       | A105FN/DS                          |         102 |
+| CAT5       | Mate 20 X                          |         100 |
+| CAT1       | iPad Pro 9.7 MLQ32LL/A             |          99 |
+| CAT5       | Y5p                                |          97 |
+| CAT3       | Galaxy Fold 5G F907F               |          96 |
+| CAT5       | P Smart 2019                       |          94 |
+| CAT3       | G925F                              |          93 |
+| CAT23      | 2038X                              |          92 |
+| CAT2       | Pixel 3a                           |          90 |
+| CAT3       | G973F                              |          81 |
+| CAT3       | A515F DS                           |          80 |
+| CAT3       | Tab A T585                         |          80 |
+| CAT34      | Poco F3                            |          80 |
+| CAT34      | Poco M4 Pro 5G                     |          80 |
+| CAT2       | Pixel 8                            |          78 |
+| CAT3       | G770F/DS                           |          78 |
+| CAT3       | SM-T725                            |          72 |
+| CAT2       | Pixel 3a XL                        |          70 |
+| CAT2       | Pixel 9                            |          70 |
+| CAT34      | Poco M3 Pro 5G                     |          70 |
+| CAT6       | Xperia E5                          |          69 |
+| CAT16      | 5.3                                |          66 |
+| CAT3       | G900F                              |          64 |
+| CAT1       | iPhone 16 Pro                      |          62 |
+| CAT2       | Pixel 4a                           |          62 |
+| CAT6       | Xperia Z5 Compact                  |          62 |
+| CAT1       | iPhone 5S                          |          60 |
+| CAT3       | A405FN/DS                          |          60 |
+| CAT3       | SMT875                             |          60 |
+| CAT5       | P40                                |          60 |
+| CAT6       | Xperia Z5                          |          60 |
+| CAT5       | Y5 II                              |          59 |
+| CAT1       | iPhone 15 Plus                     |          58 |
+| CAT1       | iPhone 16                          |          58 |
+| CAT3       | G955F/DS                           |          58 |
+| CAT3       | N980F/DS                           |          58 |
+| CAT22      | 8 Pro                              |          57 |
+| CAT5       | P9                                 |          54 |
+| CAT5       | Mediapad T5                        |          53 |
+| CAT5       | P8 Lite                            |          52 |
+| CAT5       | P smart+ 2019                      |          50 |
+| CAT3       | A405F/DS                           |          49 |
+| CAT5       | P40 Pro                            |          49 |
+| CAT2       | Pixel 10a                          |          48 |
+| CAT3       | A325F/DS                           |          47 |
+| CAT5       | P Smart                            |          47 |
+| CAT2       | Pixel 4                            |          44 |
+| CAT22      | 7 Pro                              |          44 |
+| CAT1       | iPhone 6S Plus                     |          43 |
+| CAT16      | 3.1                                |          42 |
+| CAT1       | iPhone Air                         |          40 |
+| CAT2       | Pixel Fold 5G                      |          40 |
+| CAT3       | A215F/DS                           |          40 |
+| CAT3       | R875F                              |          40 |
+| CAT3       | X216R                              |          40 |
+| CAT6       | Xperia Z3                          |          40 |
+| CAT6       | Xperia 10 Plus                     |          38 |
+| CAT6       | Xperia XA2 Ultra                   |          36 |
+| CAT2       | Pixel 2                            |          35 |
+| CAT5       | Y6 2019                            |          35 |
+| CAT1       | MTGN2B/A                           |          34 |
+| CAT3       | G908B/DS                           |          33 |
+| CAT2       | Pixel 9 Pro XL                     |          32 |
+| CAT3       | G991U                              |          32 |
+| CAT6       | Xperia M4                          |          32 |
+| CAT3       | Tab S5e                            |          30 |
+| CAT3       | X716B                              |          30 |
+| CAT3       | Galaxy A6                          |          28 |
+| CAT3       | S908E/DS                           |          28 |
+| CAT5       | HONOR View20                       |          27 |
+| CAT6       | Xperia Z5 Premium                  |          27 |
+| CAT1       | iPad Air 4th Gen                   |          26 |
+| CAT2       | Pixel 9 Pro                        |          26 |
+| CAT3       | F916B                              |          26 |
+| CAT3       | N960F DS                           |          26 |
+| CAT5       | Mate 20                            |          26 |
+| CAT3       | A515F/DSN                          |          25 |
+| CAT3       | N985F/DS                           |          25 |
+| CAT2       | Pixel 9a                           |          24 |
+| CAT23      | TCL 10 5G                          |          24 |
+| CAT16      | G21                                |          23 |
+| CAT1       | iPhone 6 Plus                      |          22 |
+| CAT3       | samsung                            |          22 |
+| CAT3       | A320F                              |          21 |
+| CAT5       | Huawei Y7                          |          21 |
+| CAT1       | iPhone 17                          |          20 |
+| CAT23      | 1X 2019                            |          20 |
+| CAT3       | G975U                              |          20 |
+| CAT3       | J600 2018                          |          20 |
+| CAT3       | R885F                              |          20 |
+| CAT3       | R895F                              |          20 |
+| CAT3       | SMT225                             |          20 |
+| CAT34      | Poco X5Pro 5G                      |          20 |
+| CAT5       | HONOR 20                           |          20 |
+| CAT5       | Honor 8X                           |          20 |
+| CAT3       | A525F/DS                           |          19 |
+| CAT6       | Xperia Z3 Compact                  |          19 |
+| CAT18      | 5G Home Broadband Hub              |          18 |
+| CAT2       | Pixel 3                            |          18 |
+| CAT34      | 13T Pro                            |          18 |
+| CAT5       | Mate 20 Lite D/S                   |          18 |
+| CAT5       | P9 Lite                            |          18 |
+| CAT1       | iPhone 5                           |          17 |
+| CAT20      | Xiaomi Mi 10                       |          17 |
+| CAT3       | A600F                              |          16 |
+| CAT3       | J530F                              |          16 |
+| CAT6       | Xperia XA Ultra                    |          16 |
+| CAT6       | XZ2 Premium                        |          16 |
+| CAT3       | A225F/DS                           |          15 |
+| CAT3       | G390F                              |          15 |
+| CAT3       | G973U                              |          15 |
+| CAT3       | S908U                              |          15 |
+| CAT3       | S911U                              |          15 |
+| CAT5       | Y6 2017                            |          15 |
+| CAT1       | iPhone 16 Plus                     |          14 |
+| CAT23      | U3                                 |          14 |
+| CAT3       | N910F                              |          14 |
+| CAT3       | N986O/DS                           |          14 |
+| CAT3       | S906U                              |          14 |
+| CAT11      | XT1955-4                           |          13 |
+| CAT3       | G903F                              |          13 |
+| CAT3       | G928F                              |          13 |
+| CAT3       | Galaxy A8                          |          13 |
+| CAT3       | J320F                              |          13 |
+| CAT5       | Y360                               |          13 |
+| CAT2       | Pixel 9 Pro Fold                   |          12 |
+| CAT22      | 7 T                                |          12 |
+| CAT3       | S901U                              |          12 |
+| CAT5       | P10 Plus                           |          12 |
+| CAT6       | Xperia 10 Dual                     |          12 |
+| CAT5       | P10 Lite                           |          11 |
+| CAT5       | Y5                                 |          11 |
+| CAT5       | Y6II Compact                       |          11 |
+| CAT1       | A2604                              |          10 |
+| CAT16      | TA1175/DS                          |          10 |
+| CAT23      | U5                                 |          10 |
+| CAT3       | A500F/DS                           |          10 |
+| CAT3       | A750F                              |          10 |
+| CAT3       | F900F                              |          10 |
+| CAT3       | SM-X115                            |          10 |
+| CAT3       | T976B                              |          10 |
+| CAT3       | X706B                              |          10 |
+| CAT33      | ROG Phone II                       |          10 |
+| CAT5       | Honor 10                           |          10 |
+| CAT5       | Huawei Y6                          |          10 |
+| CAT6       | Xperia L4                          |           9 |
+| CAT1       | A2461                              |           8 |
+| CAT1       | iPhone 16e                         |           8 |
+| CAT1       | iPhone 5C                          |           8 |
+| CAT22      | 7                                  |           8 |
+| CAT3       | A310F                              |           8 |
+| CAT3       | A510F                              |           8 |
+| CAT3       | F946B                              |           8 |
+| CAT3       | G960U                              |           8 |
+| CAT3       | N970F                              |           8 |
+| CAT34      | Redmi Note 11 Pro                  |           8 |
+| CAT45      | 90 Lite                            |           8 |
+| CAT6       | Xperia XA1 Plus                    |           8 |
+| CAT3       | A530F/DS                           |           7 |
+| CAT3       | G920F                              |           7 |
+| CAT3       | G950FD                             |           7 |
+| CAT3       | J510F                              |           7 |
+| CAT3       | S7710                              |           7 |
+| CAT3       | S908E                              |           7 |
+| CAT3       | S936B                              |           7 |
+| CAT38      | A53                                |           7 |
+| CAT5       | P Smart Z                          |           7 |
+| CAT6       | Xperia M5                          |           7 |
+| CAT6       | Xperia Z                           |           7 |
+| CAT6       | Xperia Z1                          |           7 |
+| CAT22      | 6T                                 |           6 |
+| CAT3       | A300F                              |           6 |
+| CAT3       | G800F                              |           6 |
+| CAT3       | G981U1                             |           6 |
+| CAT3       | Pixel 9 Pro                        |           6 |
+| CAT3       | S906E                              |           6 |
+| CAT43      | Fairphone 5                        |           6 |
+| CAT5       | Nova 5T                            |           6 |
+| CAT6       | Xperia E                           |           6 |
+| CAT6       | Xperia Z3 plus                     |           6 |
+| CAT1       | iPad Pro                           |           5 |
+| CAT1       | Watch Series 5 Aluminium 44MM      |           5 |
+| CAT16      | G11                                |           5 |
+| CAT24      | Q2 Plus                            |           5 |
+| CAT3       |                                    |           5 |
+| CAT3       | G981F/DS                           |           5 |
+| CAT3       | G988U                              |           5 |
+| CAT3       | S918U                              |           5 |
+| CAT32      | F5                                 |           5 |
+| CAT5       | Y6p                                |           5 |
+| CAT6       | Xperia M2                          |           5 |
+| CAT9       | G8s ThinQ                          |           5 |
+| CAT1       | 5C                                 |           4 |
+| CAT1       | iPad A2429                         |           4 |
+| CAT1       | iPad Pro 12.9 Inch 5th Gen         |           4 |
+| CAT1       | iPhone 4                           |           4 |
+| CAT1       | iPhone SE 3                        |           4 |
+| CAT11      | Edge                               |           4 |
+| CAT12      | U12 Plus                           |           4 |
+| CAT2       | Pixel  4a                          |           4 |
+| CAT20      | Doro 8080                          |           4 |
+| CAT20      | Motorola One Zoom                  |           4 |
+| CAT22      | 6                                  |           4 |
+| CAT3       | G781U                              |           4 |
+| CAT3       | G990E                              |           4 |
+| CAT3       | iPhone 16 Pro                      |           4 |
+| CAT3       | N971N                              |           4 |
+| CAT3       | S908W                              |           4 |
+| CAT33      | Zenfone 5                          |           4 |
+| CAT38      | A15                                |           4 |
+| CAT45      | 90                                 |           4 |
+| CAT5       | Honor 9                            |           4 |
+| CAT5       | P10                                |           4 |
+| CAT5       | Y6                                 |           4 |
+| CAT6       | Xperia E3                          |           4 |
+| CAT6       | Xperia Pro I                       |           4 |
+| CAT6       | Xperia X Performance               |           4 |
+| CAT6       | Xperia Z2                          |           4 |
+| CAT1       | iPad Pro 12.9                      |           3 |
+| CAT11      | One Action                         |           3 |
+| CAT2       | Pixel 4 XL                         |           3 |
+| CAT20      | Xiaomi Mi 9T Pro                   |           3 |
+| CAT22      | Nord                               |           3 |
+| CAT3       | A107F/DS                           |           3 |
+| CAT3       | G950U                              |           3 |
+| CAT3       | G970U                              |           3 |
+| CAT3       | G986U                              |           3 |
+| CAT3       | G998N                              |           3 |
+| CAT3       | M205FN/DS                          |           3 |
+| CAT3       | N9750/DS                           |           3 |
+| CAT3       | N986U                              |           3 |
+| CAT3       | S9010                              |           3 |
+| CAT3       | S918W                              |           3 |
+| CAT32      | F5 Pro                             |           3 |
+| CAT5       | 10 Pro                             |           3 |
+| CAT6       | Xperia E4                          |           3 |
+| CAT1       | iPad A1455                         |           2 |
+| CAT1       | iPad A1550                         |           2 |
+| CAT1       | iPad A1567                         |           2 |
+| CAT1       | iPad A2123                         |           2 |
+| CAT1       | iPad Air                           |           2 |
+| CAT1       | iPad Air 2                         |           2 |
+| CAT1       | iPhone 3                           |           2 |
+| CAT1       | iPhone 4S                          |           2 |
+| CAT1       | MTH12B/A                           |           2 |
+| CAT11      | Edge 20 Lite                       |           2 |
+| CAT11      | Razr 40 Ultra                      |           2 |
+| CAT11      | Vision One                         |           2 |
+| CAT12      | One M9                             |           2 |
+| CAT16      | 1 Plus                             |           2 |
+| CAT16      | 6.2                                |           2 |
+| CAT16      | 7.2                                |           2 |
+| CAT16      | G50                                |           2 |
+| CAT2       | G975U                              |           2 |
+| CAT20      | CAT S61                            |           2 |
+| CAT20      | Doro 5516                          |           2 |
+| CAT20      | DORO 6520                          |           2 |
+| CAT20      | Motorola Moto G7 Plus              |           2 |
+| CAT20      | Motorola Moto G8                   |           2 |
+| CAT20      | Motorola Moto G8 Plus              |           2 |
+| CAT20      | Motorola Vision One                |           2 |
+| CAT20      | Xiaomi Redmi Note 5 Pro            |           2 |
+| CAT22      | 9 Pro                              |           2 |
+| CAT23      | 1b                                 |           2 |
+| CAT23      | 1s                                 |           2 |
+| CAT23      | TCL T770H                          |           2 |
+| CAT3       | A025G/DS                           |           2 |
+| CAT3       | A035G/DS                           |           2 |
+| CAT3       | A536E/DS                           |           2 |
+| CAT3       | A71F/DS                            |           2 |
+| CAT3       | F707B                              |           2 |
+| CAT3       | G7810/DS                           |           2 |
+| CAT3       | G970U1                             |           2 |
+| CAT3       | G9750                              |           2 |
+| CAT3       | G981U                              |           2 |
+| CAT3       | G991W                              |           2 |
+| CAT3       | G998O                              |           2 |
+| CAT3       | i9300                              |           2 |
+| CAT3       | J500F                              |           2 |
+| CAT3       | N950U                              |           2 |
+| CAT3       | P619                               |           2 |
+| CAT3       | S901US                             |           2 |
+| CAT3       | S908N                              |           2 |
+| CAT3       | SM707B                             |           2 |
+| CAT3       | X906B                              |           2 |
+| CAT34      | POCO F2 Pro                        |           2 |
+| CAT38      | A54                                |           2 |
+| CAT38      | A94                                |           2 |
+| CAT38      | Find X3 Lite                       |           2 |
+| CAT41      | S42                                |           2 |
+| CAT45      | Honor 50                           |           2 |
+| CAT45      | iPhone 13                          |           2 |
+| CAT45      | iPhone 14                          |           2 |
+| CAT45      | Magic Pro                          |           2 |
+| CAT45      | S908U                              |           2 |
+| CAT5       | N9005                              |           2 |
+| CAT5       | P30 Pro /DS                        |           2 |
+| CAT6       | Xperia Z4 Tablet                   |           2 |
+| CAT9       | Nexus 5X                           |           2 |
+| CAT1       | 5                                  |           1 |
+| CAT1       | A1891                              |           1 |
+| CAT1       | Apple iPad  2018 A 1954            |           1 |
+| CAT1       | i-Phone SE                         |           1 |
+| CAT1       | iPad 2                             |           1 |
+| CAT1       | iPad 4                             |           1 |
+| CAT1       | iPad Mini 4                        |           1 |
+| CAT1       | Xr                                 |           1 |
+| CAT1       | Y5                                 |           1 |
+| CAT11      | Moto G5 Plus                       |           1 |
+| CAT12      | E3                                 |           1 |
+| CAT12      | Wildfire E1                        |           1 |
+| CAT16      | 3                                  |           1 |
+| CAT16      | 5                                  |           1 |
+| CAT16      | 520                                |           1 |
+| CAT16      | 7 Plus                             |           1 |
+| CAT16      | 7.1                                |           1 |
+| CAT16      | 8 Sirocco                          |           1 |
+| CAT16      | 8.1                                |           1 |
+| CAT16      | 9 PureView                         |           1 |
+| CAT2       | Google Pixel                       |           1 |
+| CAT2       | iPhone 13 Pro Max                  |           1 |
+| CAT2       | Pixel XL                           |           1 |
+| CAT2       | S918B                              |           1 |
+| CAT2       | test                               |           1 |
+| CAT20      | BlackBerry Z10                     |           1 |
+| CAT20      | Blackview                          |           1 |
+| CAT20      | Blackview MAX 1                    |           1 |
+| CAT20      | Fairphone 3                        |           1 |
+| CAT20      | Moto G6                            |           1 |
+| CAT20      | Motorola One Macro                 |           1 |
+| CAT20      | S60                                |           1 |
+| CAT20      | Xiaomi Redmi Note 8 Pro            |           1 |
+| CAT20      | ZTE Axon 10 Pro                    |           1 |
+| CAT22      | 3T                                 |           1 |
+| CAT22      | 5                                  |           1 |
+| CAT22      | 8                                  |           1 |
+| CAT22      | Nord 2                             |           1 |
+| CAT3       | A305F/DS                           |           1 |
+| CAT3       | A346E/DS                           |           1 |
+| CAT3       | A505F/DS                           |           1 |
+| CAT3       | A546E                              |           1 |
+| CAT3       | F721W                              |           1 |
+| CAT3       | G360F                              |           1 |
+| CAT3       | G715FN/DS                          |           1 |
+| CAT3       | G935U                              |           1 |
+| CAT3       | G9550                              |           1 |
+| CAT3       | G955U                              |           1 |
+| CAT3       | G955W                              |           1 |
+| CAT3       | G9880/DS                           |           1 |
+| CAT3       | Galaxy A9                          |           1 |
+| CAT3       | Green                              |           1 |
+| CAT3       | GT-I9506                           |           1 |
+| CAT3       | i9195                              |           1 |
+| CAT3       | J110H/DS                           |           1 |
+| CAT3       | J4 Plus                            |           1 |
+| CAT3       | J415FN/DS                          |           1 |
+| CAT3       | J500/DS                            |           1 |
+| CAT3       | J6+                                |           1 |
+| CAT3       | J730F D/S                          |           1 |
+| CAT3       | M205F/DS                           |           1 |
+| CAT3       | N950N                              |           1 |
+| CAT3       | N960N                              |           1 |
+| CAT3       | N970O                              |           1 |
+| CAT3       | N975U                              |           1 |
+| CAT3       | N981B                              |           1 |
+| CAT3       | N981U                              |           1 |
+| CAT3       | S6310                              |           1 |
+| CAT3       | S901N                              |           1 |
+| CAT3       | S906W                              |           1 |
+| CAT3       | S916U                              |           1 |
+| CAT3       | S9180                              |           1 |
+| CAT3       | S918B                              |           1 |
+| CAT3       | S918N                              |           1 |
+| CAT3       | S918O                              |           1 |
+| CAT34      | 11T                                |           1 |
+| CAT34      | Redmi Note 9 Pro                   |           1 |
+| CAT38      | A54S                               |           1 |
+| CAT39      | Nothing Phone 1                    |           1 |
+| CAT5       | G935F                              |           1 |
+| CAT5       | Honor 20 Pro                       |           1 |
+| CAT5       | Honor 8                            |           1 |
+| CAT5       | Honor 8X/DS                        |           1 |
+| CAT5       | Honor Magic4 Pro                   |           1 |
+| CAT5       | Mate 9                             |           1 |
+| CAT5       | P Smart Pro                        |           1 |
+| CAT5       | P30Pro                             |           1 |
+| CAT5       | Y5 2019                            |           1 |
+| CAT5       | Y6 Pro                             |           1 |
+| CAT5       | Y7                                 |           1 |
+| CAT6       |                                    |           1 |
+| CAT6       | Ericsson LT26i                     |           1 |
+| CAT6       | Z1 Compact                         |           1 |
+| CAT9       | G4                                 |           1 |
+| CAT9       | G7                                 |           1 |
+| CAT9       | V30                                |           1 |
++------------+------------------------------------+-------------+
+627 rows in set (0.867 sec)
+
+Plasma side:
+
+Database changed
+mysql> show tables;
++----------------------------------------+
+| Tables_in_new_plasma_test              |
++----------------------------------------+
+| activity_log                           |
+| admin_operations                       |
+| backmarket_shipments                   |
+| blackbelt_logs                         |
+| color_check_cache                      |
+| customers                              |
+| device_history                         |
+| device_migration_exceptions            |
+| devices                                |
+| grade_definitions                      |
+| legacy_device_reserved_sales_order_map |
+| legacy_purchase_order_map              |
+| legacy_sales_brand_map                 |
+| legacy_sales_model_map                 |
+| legacy_sales_order_map                 |
+| legacy_user_map                        |
+| level3_repairs                         |
+| locations                              |
+| manufacturers                          |
+| migration_clean_devices_staging        |
+| migration_devices_import_preview       |
+| migration_missing_sales_lines_report   |
+| migration_missing_sales_lines_review   |
+| migration_purchase_order_lines_staging |
+| migration_purchase_orders_staging      |
+| migration_sales_order_lines_staging    |
+| migration_sales_orders_staging         |
+| models                                 |
+| part_bases                             |
+| part_categories                        |
+| part_compatibility                     |
+| part_fault_reports                     |
+| part_lots                              |
+| part_transactions                      |
+| parts                                  |
+| purchase_order_lines                   |
+| purchase_orders                        |
+| qc_jobs                                |
+| qc_legacy_import_audit                 |
+| qc_migration_quarantine                |
+| qc_results                             |
+| qc_results_backup_20260409             |
+| repair_comments                        |
+| repair_jobs                            |
+| repair_parts_used                      |
+| repair_records                         |
+| return_items                           |
+| returns                                |
+| sales_order_items                      |
+| sales_order_lines                      |
+| sales_orders                           |
+| shipment_tracking                      |
+| storage_options                        |
+| suppliers                              |
+| tac_lookup                             |
+| users                                  |
+| v_awaiting_qc                          |
+| v_awaiting_repair                      |
+| v_dashboard_metrics                    |
+| v_device_availability                  |
+| v_recent_purchase_orders               |
+| v_stock_summary                        |
+| v_unprocessed_sales_orders             |
++----------------------------------------+
+63 rows in set (0.00 sec)
+
+mysql> describe purchase_orders;
++-------------------+-----------------------------------------------------------------------------+------+-----+-------------------+-----------------------------------------------+
+| Field             | Type                                                                        | Null | Key | Default           | Extra                                         |
++-------------------+-----------------------------------------------------------------------------+------+-----+-------------------+-----------------------------------------------+
+| id                | int unsigned                                                                | NO   | PRI | NULL              | auto_increment                                |
+| po_number         | varchar(20)                                                                 | NO   | UNI | NULL              |                                               |
+| supplier_id       | int unsigned                                                                | NO   | MUL | NULL              |                                               |
+| supplier_ref      | varchar(100)                                                                | YES  |     | NULL              |                                               |
+| status            | enum('DRAFT','CONFIRMED','PARTIALLY_RECEIVED','FULLY_RECEIVED','CANCELLED') | YES  | MUL | DRAFT             |                                               |
+| expected_quantity | int unsigned                                                                | YES  |     | 0                 |                                               |
+| received_quantity | int unsigned                                                                | YES  |     | 0                 |                                               |
+| requires_qc       | tinyint(1)                                                                  | YES  |     | 1                 |                                               |
+| requires_repair   | tinyint(1)                                                                  | YES  |     | 0                 |                                               |
+| notes             | text                                                                        | YES  |     | NULL              |                                               |
+| created_by        | int unsigned                                                                | NO   | MUL | NULL              |                                               |
+| confirmed_at      | timestamp                                                                   | YES  |     | NULL              |                                               |
+| created_at        | timestamp                                                                   | YES  | MUL | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| updated_at        | timestamp                                                                   | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP |
++-------------------+-----------------------------------------------------------------------------+------+-----+-------------------+-----------------------------------------------+
+14 rows in set (0.00 sec)
+
+mysql> show tables;
++----------------------------------------+
+| Tables_in_new_plasma_test              |
++----------------------------------------+
+| activity_log                           |
+| admin_operations                       |
+| applied_quantum_events                 |
+| backmarket_shipments                   |
+| blackbelt_logs                         |
+| color_check_cache                      |
+| customers                              |
+| device_history                         |
+| device_migration_exceptions            |
+| devices                                |
+| grade_definitions                      |
+| legacy_brand_map                       |
+| legacy_device_reserved_sales_order_map |
+| legacy_purchase_order_map              |
+| legacy_sales_brand_map                 |
+| legacy_sales_model_map                 |
+| legacy_sales_order_map                 |
+| legacy_user_map                        |
+| level3_repairs                         |
+| locations                              |
+| manufacturers                          |
+| migration_clean_devices_staging        |
+| migration_devices_import_preview       |
+| migration_missing_sales_lines_report   |
+| migration_missing_sales_lines_review   |
+| migration_purchase_order_lines_staging |
+| migration_purchase_orders_staging      |
+| migration_sales_order_lines_staging    |
+| migration_sales_orders_staging         |
+| models                                 |
+| part_bases                             |
+| part_categories                        |
+| part_compatibility                     |
+| part_fault_reports                     |
+| part_lots                              |
+| part_transactions                      |
+| parts                                  |
+| purchase_order_lines                   |
+| purchase_orders                        |
+| qc_jobs                                |
+| qc_legacy_import_audit                 |
+| qc_migration_quarantine                |
+| qc_results                             |
+| qc_results_backup_20260409             |
+| repair_comments                        |
+| repair_jobs                            |
+| repair_parts_used                      |
+| repair_records                         |
+| return_items                           |
+| returns                                |
+| sales_order_items                      |
+| sales_order_lines                      |
+| sales_orders                           |
+| shipment_tracking                      |
+| storage_options                        |
+| suppliers                              |
+| tac_lookup                             |
+| users                                  |
+| v_awaiting_qc                          |
+| v_awaiting_repair                      |
+| v_dashboard_metrics                    |
+| v_device_availability                  |
+| v_recent_purchase_orders               |
+| v_stock_summary                        |
+| v_unprocessed_sales_orders             |
++----------------------------------------+
+65 rows in set (0.00 sec)
+
+mysql> select * from legacy_brand_map
+    -> ;
+Empty set (0.00 sec)
+
+mysql> describe legacy_brand_map;
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| Field             | Type         | Null | Key | Default           | Extra                                         |
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| legacy_item_brand | varchar(20)  | NO   | PRI | NULL              |                                               |
+| manufacturer_name | varchar(100) | NO   | MUL | NULL              |                                               |
+| created_at        | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| updated_at        | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP |
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+4 rows in set (0.00 sec)
+
+mysql> use s4d_england_db;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> select * from tbl_categories;
++----+---------------+-------------+---------+
+| id | title         | category_id | user_id |
++----+---------------+-------------+---------+
+|  2 | Google        | CAT2        |    NULL |
+|  3 | Samsung       | CAT3        |    NULL |
+|  5 | Huawei        | CAT5        |    NULL |
+|  6 | Sony          | CAT6        |    NULL |
+|  9 | LG            | CAT9        |    NULL |
+| 11 | Motorola      | CAT11       |    NULL |
+| 13 | HTC           | CAT12       |    NULL |
+| 14 | Apple         | CAT1        |    NULL |
+| 15 | Nintendo      | CAT15       |    NULL |
+| 16 | Nokia         | CAT16       |    NULL |
+| 17 | Microsoft     | CAT17       |    NULL |
+| 18 | 3             | CAT18       |    NULL |
+| 19 | Dyson         | CAT19       |    NULL |
+| 20 | Other         | CAT20       |    NULL |
+| 21 | HP            | CAT21       |    NULL |
+| 22 | OnePlus       | CAT22       |    NULL |
+| 23 | Alcatel       | CAT23       |    NULL |
+| 24 | IMO           | CAT24       |    NULL |
+| 25 | Toshiba       | CAT25       |    NULL |
+| 26 | Amazon        | CAT26       |    NULL |
+| 27 | FitBit        | CAT27       |    NULL |
+| 28 | Dell          | CAT28       |    NULL |
+| 29 | Astro         | CAT29       |    NULL |
+| 30 | Beats         | CAT30       |    NULL |
+| 31 | BER           | CAT31       |    NULL |
+| 32 | POCO          | CAT32       |    NULL |
+| 33 | Asus          | CAT33       |    NULL |
+| 34 | Xiaomi        | CAT34       |    NULL |
+| 35 | Blackview     | CAT35       |    NULL |
+| 36 | Facebook Inc  | CAT36       |    NULL |
+| 37 | Cisco         | CAT37       |    NULL |
+| 38 | OPPO          | CAT38       |    NULL |
+| 40 | Nothing Phone | CAT39       |    NULL |
+| 42 | CAT           | CAT41       |    NULL |
+| 44 | Fairphone     | CAT43       |    NULL |
+| 46 | Honor         | CAT45       |    NULL |
++----+---------------+-------------+---------+
+36 rows in set (0.00 sec)
+
+mysql> use new_plasma_test ;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> INSERT INTO legacy_brand_map (legacy_item_brand, manufacturer_name)
+    -> VALUES
+    -> ('CAT2',  'Google'),
+    -> ('CAT3',  'Samsung'),
+    -> ('CAT5',  'Huawei'),
+    -> ('CAT6',  'Sony'),
+    -> ('CAT9',  'LG'),
+    -> ('CAT11', 'Motorola'),
+    -> ('CAT12', 'HTC'),
+    -> ('CAT1',  'Apple'),
+    -> ('CAT15', 'Nintendo'),
+    -> ('CAT16', 'Nokia'),
+    -> ('CAT17', 'Microsoft'),
+    -> ('CAT18', '3'),
+    -> ('CAT19', 'Dyson'),
+    -> ('CAT20', 'Other'),
+    -> ('CAT21', 'HP'),
+    -> ('CAT22', 'OnePlus'),
+    -> ('CAT23', 'Alcatel'),
+    -> ('CAT24', 'IMO'),
+    -> ('CAT25', 'Toshiba'),
+    -> ('CAT26', 'Amazon'),
+    -> ('CAT27', 'FitBit'),
+    -> ('CAT28', 'Dell'),
+    -> ('CAT29', 'Astro'),
+    -> ('CAT30', 'Beats'),
+    -> ('CAT31', 'BER'),
+    -> ('CAT32', 'POCO'),
+    -> ('CAT33', 'Asus'),
+    -> ('CAT34', 'Xiaomi'),
+    -> ('CAT35', 'Blackview'),
+    -> ('CAT36', 'Facebook Inc'),
+    -> ('CAT37', 'Cisco'),
+    -> ('CAT38', 'OPPO'),
+    -> ('CAT39', 'Nothing Phone'),
+    -> ('CAT41', 'CAT'),
+    -> ('CAT43', 'Fairphone'),
+    -> ('CAT45', 'Honor')
+    -> ON DUPLICATE KEY UPDATE
+    ->     manufacturer_name = VALUES(manufacturer_name),
+    ->     updated_at = CURRENT_TIMESTAMP;
+Query OK, 36 rows affected, 1 warning (0.02 sec)
+Records: 36  Duplicates: 0  Warnings: 1
+
+mysql> select * from legacy_brand_map order by legacy_item_brand;
++-------------------+-------------------+---------------------+---------------------+
+| legacy_item_brand | manufacturer_name | created_at          | updated_at          |
++-------------------+-------------------+---------------------+---------------------+
+| CAT1              | Apple             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT11             | Motorola          | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT12             | HTC               | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT15             | Nintendo          | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT16             | Nokia             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT17             | Microsoft         | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT18             | 3                 | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT19             | Dyson             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT2              | Google            | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT20             | Other             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT21             | HP                | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT22             | OnePlus           | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT23             | Alcatel           | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT24             | IMO               | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT25             | Toshiba           | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT26             | Amazon            | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT27             | FitBit            | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT28             | Dell              | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT29             | Astro             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT3              | Samsung           | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT30             | Beats             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT31             | BER               | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT32             | POCO              | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT33             | Asus              | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT34             | Xiaomi            | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT35             | Blackview         | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT36             | Facebook Inc      | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT37             | Cisco             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT38             | OPPO              | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT39             | Nothing Phone     | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT41             | CAT               | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT43             | Fairphone         | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT45             | Honor             | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT5              | Huawei            | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT6              | Sony              | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
+| CAT9              | LG                | 2026-04-17 15:09:01 | 2026-04-17 15:09:01 |
++-------------------+-------------------+---------------------+---------------------+
+36 rows in set (0.00 sec)
+
+mysql> exit
+Bye
+root@gascat-ThinkPad-P14s-Gen-2i:/home/gascat# nano poller.sql
+root@gascat-ThinkPad-P14s-Gen-2i:/home/gascat# mysql -u root -p new_plasma_test < pol
+polines2.sql  polines3.sql  polines.sql   poller.sql    
+root@gascat-ThinkPad-P14s-Gen-2i:/home/gascat# mysql -u root -p new_plasma_test < poller.sql 
+Enter password: 
+ERROR 1064 (42000) at line 5: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':last_outbox_id
+  AND event_type IN (
+    'goods_in.device_booked',
+    'sales_o' at line 11
+root@gascat-ThinkPad-P14s-Gen-2i:/home/gascat# nano poller.sql
+root@gascat-ThinkPad-P14s-Gen-2i:/home/gascat# mysql -u root -p new_plasma_test 
+Enter password: 
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 214
+Server version: 8.0.45-0ubuntu0.24.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SELECT
+    ->   id,
+    ->   event_type,
+    ->   entity_type,
+    ->   entity_id,
+    ->   payload_json,
+    ->   source_user,
+    ->   created_at,
+    ->   idempotency_key
+    -> FROM quantum_event_outbox
+    -> WHERE id > :last_outbox_id
+    ->   AND event_type IN (
+    ->     'goods_in.device_booked',
+    ->     'sales_order.device_reserved',
+    ->     'sales_order.updated',
+    ->     'stock.device_moved',
+    ->     'qc.updated',
+    ->     'qc.device_passed',
+    ->     'qc.device_failed'
+    ->   )
+    -> ORDER BY id
+    -> LIMIT :batch_size;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':last_outbox_id
+  AND event_type IN (
+    'goods_in.device_booked',
+    'sales_o' at line 11
+mysql> SET @last_outbox_id = 0;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> SET @legacy_purchase_id = 8713;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> SET @legacy_order_id = 16189;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> 
+mysql> -- 1. Read the next outbox batch
+mysql> SELECT
+    ->   id,
+    ->   event_type,
+    ->   entity_type,
+    ->   entity_id,
+    ->   payload_json,
+    ->   source_user,
+    ->   created_at,
+    ->   idempotency_key
+    -> FROM quantum_event_outbox
+    -> WHERE id > @last_outbox_id
+    ->   AND event_type IN (
+    ->     'goods_in.device_booked',
+    ->     'sales_order.device_reserved',
+    ->     'sales_order.updated',
+    ->     'stock.device_moved',
+    ->     'qc.updated',
+    ->     'qc.device_passed',
+    ->     'qc.device_failed'
+    ->   )
+    -> ORDER BY id
+    -> LIMIT 50;
+ERROR 1146 (42S02): Table 'new_plasma_test.quantum_event_outbox' doesn't exist
+mysql> SELECT
+    ->   legacy_item_brand,
+    ->   legacy_item_details,
+    ->   manufacturer_id,
+    ->   model_id
+    -> FROM legacy_sales_model_map
+    -> ORDER BY legacy_item_brand, legacy_item_details;
++-------------------+---------------------+-----------------+----------+
+| legacy_item_brand | legacy_item_details | manufacturer_id | model_id |
++-------------------+---------------------+-----------------+----------+
+| CAT1              | A2890               |               1 |        1 |
++-------------------+---------------------+-----------------+----------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 13. Plasma-side audit helper: legacy brand mappings
+mysql> -- Run this one against new_plasma_test, not Quantum.
+mysql> SELECT
+    ->   legacy_item_brand,
+    ->   manufacturer_name
+    -> FROM legacy_brand_map
+    -> ORDER BY legacy_item_brand;
+Empty set (0.00 sec)
+
+mysql> 
+mysql> -- 14. Plasma-side audit helper: available native models
+mysql> -- Run this one against new_plasma_test, not Quantum.
+mysql> SELECT
+    ->   man.name AS manufacturer_name,
+    ->   man.code AS manufacturer_code,
+    ->   mo.id AS model_id,
+    ->   mo.model_number,
+    ->   mo.model_name
+    -> FROM models mo
+    -> JOIN manufacturers man
+    ->   ON man.id = mo.manufacturer_id
+    -> ORDER BY man.name, mo.model_number;
++-------------------+-------------------+----------+--------------+---------------+
+| manufacturer_name | manufacturer_code | model_id | model_number | model_name    |
++-------------------+-------------------+----------+--------------+---------------+
+| Apple             | APPLE             |        1 | A2890        | iPhone 15 Pro |
++-------------------+-------------------+----------+--------------+---------------+
+1 row in set (0.00 sec)
+
+mysql> select * from legacy_brand_map;
+Empty set (0.00 sec)
+
+mysql> describe legacy brand map;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'map' at line 1
+mysql> describe legacy_brand_map;
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| Field             | Type         | Null | Key | Default           | Extra                                         |
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| legacy_item_brand | varchar(20)  | NO   | PRI | NULL              |                                               |
+| manufacturer_name | varchar(100) | NO   | MUL | NULL              |                                               |
+| created_at        | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| updated_at        | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP |
++-------------------+--------------+------+-----+-------------------+-----------------------------------------------+
+4 rows in set (0.01 sec)
+
+mysql> INSERT INTO legacy_brand_map (legacy_item_brand, manufacturer_name)
+    -> VALUES
+    -> ('CAT2',  'Google'),
+    -> ('CAT3',  'Samsung'),
+    -> ('CAT5',  'Huawei'),
+    -> ('CAT6',  'Sony'),
+    -> ('CAT9',  'LG'),
+    -> ('CAT11', 'Motorola'),
+    -> ('CAT12', 'HTC'),
+    -> ('CAT1',  'Apple'),
+    -> ('CAT15', 'Nintendo'),
+    -> ('CAT16', 'Nokia'),
+    -> ('CAT17', 'Microsoft'),
+    -> ('CAT18', '3'),
+    -> ('CAT19', 'Dyson'),
+    -> ('CAT20', 'Other'),
+    -> ('CAT21', 'HP'),
+    -> ('CAT22', 'OnePlus'),
+    -> ('CAT23', 'Alcatel'),
+    -> ('CAT24', 'IMO'),
+    -> ('CAT25', 'Toshiba'),
+    -> ('CAT26', 'Amazon'),
+    -> ('CAT27', 'FitBit'),
+    -> ('CAT28', 'Dell'),
+    -> ('CAT29', 'Astro'),
+    -> ('CAT30', 'Beats'),
+    -> ('CAT31', 'BER'),
+    -> ('CAT32', 'POCO'),
+    -> ('CAT33', 'Asus'),
+    -> ('CAT34', 'Xiaomi'),
+    -> ('CAT35', 'Blackview'),
+    -> ('CAT36', 'Facebook Inc'),
+    -> ('CAT37', 'Cisco'),
+    -> ('CAT38', 'OPPO'),
+    -> ('CAT39', 'Nothing Phone'),
+    -> ('CAT41', 'CAT'),
+    -> ('CAT43', 'Fairphone'),
+    -> ('CAT45', 'Honor')
+    -> ON DUPLICATE KEY UPDATE
+    ->     manufacturer_name = VALUES(manufacturer_name),
+    ->     updated_at = CURRENT_TIMESTAMP;
+Query OK, 36 rows affected, 1 warning (0.01 sec)
+Records: 36  Duplicates: 0  Warnings: 1
+
+mysql> SELECT
+    ->   legacy_item_brand,
+    ->   legacy_item_details,
+    ->   manufacturer_id,
+    ->   model_id
+    -> FROM legacy_sales_model_map
+    -> ORDER BY legacy_item_brand, legacy_item_details;
++-------------------+---------------------+-----------------+----------+
+| legacy_item_brand | legacy_item_details | manufacturer_id | model_id |
++-------------------+---------------------+-----------------+----------+
+| CAT1              | A2890               |               1 |        1 |
++-------------------+---------------------+-----------------+----------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 13. Plasma-side audit helper: legacy brand mappings
+mysql> -- Run this one against new_plasma_test, not Quantum.
+mysql> SELECT
+    ->   legacy_item_brand,
+    ->   manufacturer_name
+    -> FROM legacy_brand_map
+    -> ORDER BY legacy_item_brand;
++-------------------+-------------------+
+| legacy_item_brand | manufacturer_name |
++-------------------+-------------------+
+| CAT1              | Apple             |
+| CAT11             | Motorola          |
+| CAT12             | HTC               |
+| CAT15             | Nintendo          |
+| CAT16             | Nokia             |
+| CAT17             | Microsoft         |
+| CAT18             | 3                 |
+| CAT19             | Dyson             |
+| CAT2              | Google            |
+| CAT20             | Other             |
+| CAT21             | HP                |
+| CAT22             | OnePlus           |
+| CAT23             | Alcatel           |
+| CAT24             | IMO               |
+| CAT25             | Toshiba           |
+| CAT26             | Amazon            |
+| CAT27             | FitBit            |
+| CAT28             | Dell              |
+| CAT29             | Astro             |
+| CAT3              | Samsung           |
+| CAT30             | Beats             |
+| CAT31             | BER               |
+| CAT32             | POCO              |
+| CAT33             | Asus              |
+| CAT34             | Xiaomi            |
+| CAT35             | Blackview         |
+| CAT36             | Facebook Inc      |
+| CAT37             | Cisco             |
+| CAT38             | OPPO              |
+| CAT39             | Nothing Phone     |
+| CAT41             | CAT               |
+| CAT43             | Fairphone         |
+| CAT45             | Honor             |
+| CAT5              | Huawei            |
+| CAT6              | Sony              |
+| CAT9              | LG                |
++-------------------+-------------------+
+36 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 14. Plasma-side audit helper: available native models
+mysql> -- Run this one against new_plasma_test, not Quantum.
+mysql> SELECT
+    ->   man.name AS manufacturer_name,
+    ->   man.code AS manufacturer_code,
+    ->   mo.id AS model_id,
+    ->   mo.model_number,
+    ->   mo.model_name
+    -> FROM models mo
+    -> JOIN manufacturers man
+    ->   ON man.id = mo.manufacturer_id
+    -> ORDER BY man.name, mo.model_number
+    -> ;
++-------------------+-------------------+----------+--------------+---------------+
+| manufacturer_name | manufacturer_code | model_id | model_number | model_name    |
++-------------------+-------------------+----------+--------------+---------------+
+| Apple             | APPLE             |        1 | A2890        | iPhone 15 Pro |
++-------------------+-------------------+----------+--------------+---------------+
+1 row in set (0.00 sec)
+

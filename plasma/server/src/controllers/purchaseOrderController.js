@@ -215,10 +215,37 @@ export const receiveDevices = asyncHandler(async (req, res) => {
     return errorResponse(res, 'Devices array is required', 'MISSING_DEVICES', 400);
   }
 
-  // Note: All validation handled by validateReceiveDevices middleware
-  // - IMEI format (14-15 digits)
-  // - Required fields: manufacturer_id, model_id, location_id
-  // - Optional fields: storage_gb, color, grade, supplier_id
+  // Validate each device has required fields
+  for (const device of devices) {
+    if (!device.imei || !device.manufacturer_id || !device.model_id) {
+      return errorResponse(
+        res,
+        'Each device must have imei, manufacturer_id, and model_id',
+        'INVALID_DEVICE',
+        400
+      );
+    }
+
+    // Validate storage and color are provided (prevent NULL values)
+    if (!device.storage_gb || !device.color) {
+      return errorResponse(
+        res,
+        `Device ${device.imei}: Storage and color are required`,
+        'MISSING_ATTRIBUTES',
+        400
+      );
+    }
+
+    // Basic IMEI validation (15 digits)
+    if (!/^\d{15}$/.test(device.imei)) {
+      return errorResponse(
+        res,
+        `Invalid IMEI format: ${device.imei}`,
+        'INVALID_IMEI',
+        400
+      );
+    }
+  }
 
   const result = await purchaseOrderModel.receiveDevices(
     id,
@@ -237,6 +264,7 @@ export const receiveDevices = asyncHandler(async (req, res) => {
 // Get devices received for a purchase order
 export const getReceivedDevices = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const { limit = 100 } = req.query;
 
   // Check if PO exists
   const order = await purchaseOrderModel.getById(id);
@@ -304,3 +332,4 @@ export const bookInStock = asyncHandler(async (req, res) => {
   );
 
   return successResponse(res, { result }, `Successfully booked in ${devices.length} device(s)`, 201);
+});

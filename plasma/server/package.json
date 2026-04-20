@@ -7,6 +7,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "catalog:report": "node report-quantum-device-catalog.js",
+    "catalog:sync": "node sync-quantum-device-catalog.js --apply",
+    "poller:run-once": "node poll-quantum-outbox.js",
+    "poller:watch": "node poll-quantum-outbox.js --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

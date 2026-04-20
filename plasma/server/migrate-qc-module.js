@@ -9,12 +9,14 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 function getConfig() {
+  const isTest = process.env.NODE_ENV === 'test';
+
   return {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: isTest ? process.env.TEST_DB_HOST || process.env.DB_HOST || 'localhost' : process.env.DB_HOST || 'localhost',
+    port: parseInt(isTest ? process.env.TEST_DB_PORT || process.env.DB_PORT || '3306' : process.env.DB_PORT || '3306', 10),
+    user: isTest ? process.env.TEST_DB_USER || process.env.DB_USER : process.env.DB_USER,
+    password: isTest ? process.env.TEST_DB_PASSWORD || process.env.DB_PASSWORD : process.env.DB_PASSWORD,
+    database: isTest ? process.env.TEST_DB_NAME || process.env.DB_NAME : process.env.DB_NAME,
   };
 }
 

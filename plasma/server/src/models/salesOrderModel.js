@@ -422,29 +422,17 @@ export const salesOrderModel = {
 
     const [orders] = await db.query(
       `${selectClause} ${pageFromClause} ${whereClause} ORDER BY so.created_at DESC LIMIT ? OFFSET ?`,
-      // Generate SO number with lock to prevent duplicates
-      const lockName = "sales_order_number_lock";
-      const lockTimeout = 10;
+      [...params, limit, offset]
+    );
 
-      try {
-        const [lockResult] = await connection.query(
-          `SELECT GET_LOCK(?, ?) AS lock_result`,
-          [lockName, lockTimeout]
-        );
-
-        if (lockResult[0]?.lock_result !== 1) {
-          try { await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {}); } catch (_) {}
-          throw new Error("SO_NUMBER_LOCK_TIMEOUT");
-        }
-
-        const [maxSO] = await connection.query(
-          "SELECT MAX(CAST(SUBSTRING(so_number, 4) AS UNSIGNED)) as max_num FROM sales_orders"
-        );
-        const nextNum = (maxSO[0].max_num || 0) + 1;
-        const soNumber = `SO-${String(nextNum).padStart(5, "0")}`;
-
-        // Release lock early
-        await connection.query(`SELECT RELEASE_LOCK(?)`, [lockName]).catch(() => {});
+    let summary = null;
+    if (includeSummary) {
+      const [statusCounts] = await db.query(
+        `
+          SELECT
+            so.status,
+            COUNT(*) as count
+          FROM sales_orders so
           JOIN customers c ON so.customer_id = c.id
           WHERE 1=1
           ${whereClause}

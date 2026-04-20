@@ -181,9 +181,9 @@ export const deviceModel = {
 
     // Build dynamic update query
     const allowedFields = [
-      "storage_gb", "color", "oem_color", "grade",
-      "location_id", "qc_completed", "qc_completed_at",
-      "repair_completed", "repair_completed_at"
+      'storage_gb', 'color', 'oem_color', 'grade', 'status',
+      'location_id', 'qc_completed', 'qc_completed_at',
+      'repair_completed', 'repair_completed_at'
     ];
 
     for (const field of allowedFields) {
